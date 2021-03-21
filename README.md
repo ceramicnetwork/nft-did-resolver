@@ -1,0 +1,55 @@
+# NFT DID Resolver
+
+> NFT is a DID method that uses the Ceramic network to resolve DID documents for NFTs
+
+## Getting started
+
+This implementation is still a prototype. Contributions are welcome!
+
+### Installation
+```
+$ npm install nft-did-resolver
+```
+
+### Usage
+
+```
+import NftResolver from 'nft-did-resolver'
+import { Resolver } from 'did-resolver'
+
+// You need an instance of Ceramic to call getResolver.
+// This can be either @ceramicnetwork/core or @ceramicnetwork/http-client.
+const ceramic = // ...
+
+const config = {
+  ceramic,
+  ethereumRpcs: {
+    'eip155:1': 'http://localhost:8545' // url for a mainnet ethereum provider
+  }
+}
+
+// getResolver will return an object with a key/value pair of { '3': resolver }
+// where resolver is a function used by the generic did resolver.
+const threeIdResolver = ThreeIdResolver.getResolver(ceramic)
+const didResolver = Resolver(threeIdResolver)
+
+const result = await didResolver.resolve('did:nft:eip155.1_erc721.0xb300a43751601bd54ffee7de35929537b28e1488_2')
+console.log(result)
+```
+
+## Development
+Start a ceramic daemon using the `@ceramicnetwork/cli` package, and a ganache ethereum rpc using the `ganacle-cli` package.
+
+
+Then run tests:
+```
+$ npm test
+```
+
+
+## Contributing
+We are happy to accept small and large contributions. Make sure to check out the [Ceramic specifications](https://github.com/ceramicnetwork/specs) for details of how the protocol works.
+
+
+## License
+Apache-2.0 OR MIT
