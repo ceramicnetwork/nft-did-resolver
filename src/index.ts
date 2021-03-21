@@ -25,9 +25,7 @@ const erc721OwnerOf = async (asset: AssetID, rpcUrl: string): Promise<any> =>  {
       }, 'latest']
     })
   }
-  console.log('oo', opts)
   const r = await fetch(rpcUrl, opts)
-  console.log('err', r)
   if (r.ok) {
     const { result, error } = await r.json()
     if (error) throw new Error(error.message)
@@ -75,7 +73,6 @@ function idToAsset(id: string): AssetID {
 
 async function assetToAccount(asset: AssetID, timestamp: string, rpcUrl: string): Promise<AccountID> {
   const owner = await erc721OwnerOf(asset, rpcUrl)
-  console.log('owner', owner)
   return new AccountID({
     chainId: asset.chainId,
     address: owner
@@ -83,7 +80,6 @@ async function assetToAccount(asset: AssetID, timestamp: string, rpcUrl: string)
 }
 
 async function accountToDid(account: AccountID, atTime: number, ceramic: CeramicApi): Promise<string | null> {
-  console.log('asd', AccountID.format(account))
   const doc = await ceramic.createDocument('caip10-link', {
     metadata: {
       family: 'caip10-link',
@@ -160,7 +156,6 @@ export default {
           }
           return didResult
         } catch (e) {
-          console.log(e)
           return {
             didResolutionMetadata: {
               error: 'invalidDid',
