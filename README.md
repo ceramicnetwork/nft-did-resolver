@@ -13,7 +13,7 @@ $ npm install nft-did-resolver
 
 ### Usage
 
-```
+```js
 import NftResolver from 'nft-did-resolver'
 import { Resolver } from 'did-resolver'
 
@@ -28,10 +28,10 @@ const config = {
   }
 }
 
-// getResolver will return an object with a key/value pair of { '3': resolver }
+// getResolver will return an object with a key/value pair of { 'nft': resolver }
 // where resolver is a function used by the generic did resolver.
-const threeIdResolver = ThreeIdResolver.getResolver(ceramic)
-const didResolver = Resolver(threeIdResolver)
+const nftResolver = NftResolver.getResolver(config)
+const didResolver = Resolver(nftResolver)
 
 const result = await didResolver.resolve('did:nft:eip155.1_erc721.0xb300a43751601bd54ffee7de35929537b28e1488_2')
 console.log(result)
