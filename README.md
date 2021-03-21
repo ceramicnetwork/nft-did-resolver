@@ -16,10 +16,9 @@ $ npm install nft-did-resolver
 ```js
 import NftResolver from 'nft-did-resolver'
 import { Resolver } from 'did-resolver'
+import Ceramic from '@ceramicnetwork/http-client'
 
-// You need an instance of Ceramic to call getResolver.
-// This can be either @ceramicnetwork/core or @ceramicnetwork/http-client.
-const ceramic = // ...
+const ceramic = new Ceramic() // connects to localhost:7007 by default
 
 const config = {
   ceramic,
