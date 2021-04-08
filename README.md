@@ -2,6 +2,8 @@
 
 > NFT is a DID method that uses the Ceramic network to resolve DID documents for NFTs
 
+> See [CIP-94](https://github.com/ceramicnetwork/CIP/blob/main/CIPs/CIP-94/CIP-94.md)
+
 ## Getting started
 
 This implementation is still a prototype. Contributions are welcome!

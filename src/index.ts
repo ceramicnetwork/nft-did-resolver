@@ -4,138 +4,25 @@ import type {
   DIDDocument,
   ParsedDID,
   Resolver,
-  ResolverRegistry
+  ResolverRegistry,
+  VerificationMethod
 } from 'did-resolver';
 import type { CeramicApi } from '@ceramicnetwork/common';
 import { ChainID, AccountID } from 'caip';
-import fetch from 'cross-fetch';
-import { jsonToGraphQLQuery } from 'json-to-graphql-query';
-
-
-const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
-const ERC1155_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph';
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, fetchQueryData, isWithinLastBlock } from './subgraphUtils';
+import { DIDDocumentMetadata } from 'did-resolver';
 
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
 
 
-const fetchQueryData = async (queryUrl: string, query: any): Promise<any> => {
-  const fetchOpts = {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ query: jsonToGraphQLQuery({ query }) })
-  };
-
-  const resp = await fetch(queryUrl, fetchOpts);
-
-  if (resp.ok) {
-    const { data, error } = await resp.json();
-    if (error) throw new Error(error.message);
-    return data;
-  } else {
-    throw new Error('Not a valid NFT id')
-  }
-}
-
-
-type ERC721DataResponse = {
-  tokens: {
-    owner: {
-      id: string;
-    }
-  }[]
-}
-
-const erc721OwnerOf = async (asset: AssetID, customSubgraph?: string): Promise<string> => {
-  const query = {
-    tokens: {
-      __args: {
-        where: {
-          // contract: asset.reference, // not necessary 
-          id: [asset.reference, asset.tokenId].join('_')
-        },
-        first: 1
-      },
-      owner: {
-        id: true
-      }
-    }
-  };
-
-  const queryData = await fetchQueryData(customSubgraph || ERC721_QUERY_URL, query) as ERC721DataResponse;
-
-  if (!queryData?.tokens) {
-    throw new Error('Missing data');
-  } else if (queryData.tokens.length === 0) {
-    throw new Error(`No owner found for contract: ${asset.reference} and ERC721 NFT id: ${asset.tokenId}`)
-  }
-
-  return queryData.tokens[0].owner.id;
-}
-
-
-type ERC1155DataResponse = {
-  tokens: {
-    balances: {
-      account: {
-        id: string;
-      }
-    }[]
-  }[]
-}
-
-const erc1155OwnersOf = async (asset: AssetID, customSubgraph?: string): Promise<string[]> => {
-  const query = {
-    tokens: {
-      __args: {
-        where: {
-          registry: asset.reference,
-          identifier: asset.tokenId
-          // id: [asset.reference, `0x${asset.tokenId}`].join('-') // could use this instead
-        },
-        first: 1
-      },
-      balances: {
-        account: {
-          id: true
-        }
-      }
-    }
-  };
-
-  const queryData = await fetchQueryData(customSubgraph || ERC1155_QUERY_URL, query) as ERC1155DataResponse;
-
-  if (!queryData?.tokens[0]) {
-    throw new Error(`No tokens with ERC1155 NFT ID: ${asset.tokenId} found for contract: ${asset.reference}`);
-  } else if (!queryData.tokens[0].balances || queryData.tokens[0].balances.length === 0) {
-    throw new Error(`No owner found for ERC1155 NFT ID: ${asset.tokenId} for contract: ${asset.reference}`)
-  }
-
-  return queryData.tokens[0].balances.slice().map(bal => bal.account.id);
-}
-
-/**
- * Gets the unix timestamp from the `versionTime` parameter.
- * @param query
- */
-function getVersionTime(query = ''): number | undefined {
-  const versionTime = query.split('&').find(e => e.includes('versionTime'))
-  if (versionTime) {
-    return Math.floor((new Date(versionTime.split('=')[1])).getTime() / 1000)
-  }
-}
-
 // TODO - should be part of the caip library
-interface AssetID {
+export interface AssetID {
   chainId: ChainID
   namespace: string
   reference: string
   tokenId: string
 }
-
 
 function idToAsset(id: string): AssetID {
   // TODO use caip package to do this once it supports assetIds
@@ -153,9 +40,19 @@ function idToAsset(id: string): AssetID {
   }
 }
 
-async function assetToAccount(asset: AssetID, timestamp: number, customSubgraph?: string): Promise<AccountID[]> {
-  const owners = asset.namespace === 'erc721'
-    ? [ await erc721OwnerOf(asset, customSubgraph) ] : await erc1155OwnersOf(asset, customSubgraph);
+async function assetToAccount(asset: AssetID, timestamp: number, customSubgraph?: SubGraphUrls): Promise<AccountID[]> {
+  // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
+  let queryBlock: number = undefined;
+  if (timestamp && !isWithinLastBlock(timestamp)) {
+    queryBlock = await blockAtTime(timestamp);
+  }
+
+  let owners: string[];
+  if (asset.namespace === ErcNamespace.ERC721) {
+    owners = [ await erc721OwnerOf(asset, queryBlock, customSubgraph?.erc721) ];
+  } else {
+    owners = await erc1155OwnersOf(asset, queryBlock, customSubgraph?.erc1155);
+  }
 
   return owners.slice().map(owner => 
     new AccountID({
@@ -198,23 +95,45 @@ async function accountsToDids(
 }
 
 function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]): DIDDocument {
-
+  // Each of the owning accounts is a verification method (at the point in time)
   const verificationMethods = accounts.slice().map(account => {
     return {
-      id: did + '#owner',
+      id: `${did}#owner`,
       type: 'BlockchainVerificationMethod2021',
       controller: did,
       blockchainAccountId: account.toString()
-    }
+    } as VerificationMethod;
   });
 
   const doc: DIDDocument = {
     id: did,
     verificationMethod: [...verificationMethods]
   }
+  
+  // Controllers should only be an array when there're more than one
   if (controllers) doc.controller = controllers.length === 1 ? controllers[0] : controllers;
   
   return doc;
+}
+
+/**
+ * Gets the unix timestamp from the `versionTime` parameter.
+ * @param query
+ */
+function getVersionTime(query = ''): number | undefined {
+  const versionTime = query.split('&').find(e => e.includes('versionTime'))
+  if (versionTime) {
+    return Math.floor((new Date(versionTime.split('=')[1])).getTime() / 1000)
+  }
+}
+
+export enum ErcNamespace {
+  ERC721 = 'erc721',
+  ERC1155 = 'erc1155'
+}
+
+type SubGraphUrls = {
+  [namespace in ErcNamespace]?: string;
 }
 
 /**
@@ -223,7 +142,7 @@ function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]
  */
 export interface NftResovlerConfig {
   ceramic: CeramicApi;
-  customSubgraphUrl?: string;
+  subGraphUrls?: SubGraphUrls;
 }
 
 async function resolve(
@@ -234,24 +153,34 @@ async function resolve(
 ): Promise<DIDResolutionResult> {
   const asset = idToAsset(methodId);
   // for 1155s, there can be many accounts that own a single asset
-  const owningAccounts = await assetToAccount(asset, timestamp, config.customSubgraphUrl);
+  const owningAccounts = await assetToAccount(asset, timestamp, config.subGraphUrls);
   const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic);
+  const metadata: DIDDocumentMetadata = {};
+
+  // TODO create, update, versionId
+  if (timestamp) {
+    const dateString = (new Date(timestamp * 1000)).toISOString();
+    metadata.versionTime = dateString;
+  }
+
   return {
     didResolutionMetadata: { contentType: DID_JSON },
     didDocument: wrapDocument(did, owningAccounts, controllers),
-    didDocumentMetadata: {}
-  }
+    didDocumentMetadata: metadata
+  } as DIDResolutionResult;
 }
 
 export default {
   getResolver: (config: NftResovlerConfig): ResolverRegistry => {
     if (!config?.ceramic) {
       throw new Error('Invalid config for nft-did-resolver')
-    } else if (config && config.customSubgraphUrl) {
+    } else if (config.subGraphUrls) {
       try {
-        new URL(config.customSubgraphUrl);
+        // ensure that any provided url is a valid url
+        if (config.subGraphUrls.erc721) new URL(config.subGraphUrls.erc721);
+        if (config.subGraphUrls.erc1155) new URL(config.subGraphUrls.erc1155);
       } catch (e) {
-        throw new Error('Invalid customSubgraphUrl in config for nft-did-resolver');
+        throw new Error(`Invalid subGraphUrl in config for nft-did-resolver: ${e}`);
       }
     }
     return {
