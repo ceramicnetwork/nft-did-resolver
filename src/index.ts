@@ -9,8 +9,10 @@ import type {
 } from 'did-resolver';
 import type { CeramicApi } from '@ceramicnetwork/common';
 import { ChainID, AccountID } from 'caip';
-import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, fetchQueryData, isWithinLastBlock } from './subgraphUtils';
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
 import { DIDDocumentMetadata } from 'did-resolver';
+
+const ETH_CAIP2_CHAINID = 'eip155:1';
 
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
@@ -28,19 +30,20 @@ function idToAsset(id: string): AssetID {
   // TODO use caip package to do this once it supports assetIds
   const [chainid, assetType, tokenId] = id.split('_');
   const [namespace, reference] = assetType.split('.');
-
-  if (!['erc721', 'erc1155'].includes(namespace)) 
-    throw new Error('Not a valid NFT namespace');
   
   return {
-    chainId: ChainID.parse(chainid.replace('.', ':')),
+    chainId: new ChainID(ChainID.parse(chainid.replace('.', ':'))),
     namespace,
     reference,
     tokenId
   }
 }
 
-async function assetToAccount(asset: AssetID, timestamp: number, customSubgraph?: SubGraphUrls): Promise<AccountID[]> {
+async function assetToAccount(
+  asset: AssetID, 
+  timestamp: number, 
+  customSubgraph?: SubGraphUrls
+): Promise<AccountID[]> {
   // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
   let queryBlock: number = undefined;
   if (timestamp && !isWithinLastBlock(timestamp)) {
@@ -48,11 +51,25 @@ async function assetToAccount(asset: AssetID, timestamp: number, customSubgraph?
   }
 
   let owners: string[];
-  if (asset.namespace === ErcNamespace.ERC721) {
-    owners = [ await erc721OwnerOf(asset, queryBlock, customSubgraph?.erc721) ];
+  // dealing with eth mainnet
+  if (asset.chainId.toString() === ETH_CAIP2_CHAINID) {
+    let ethSubgraphUrls = undefined;
+
+    if (customSubgraph && customSubgraph[ETH_CAIP2_CHAINID]) {
+      ethSubgraphUrls = customSubgraph[ETH_CAIP2_CHAINID];
+    }
+
+    if (asset.namespace === 'erc721') {
+      owners = [ await erc721OwnerOf(asset, queryBlock, ethSubgraphUrls?.erc721) ];
+    } else if (asset.namespace === 'erc1155') {
+      owners = await erc1155OwnersOf(asset, queryBlock, ethSubgraphUrls?.erc1155);
+    } else {
+      throw new Error(`Unrecognized ERC Namespace: ${asset.namespace}`);
+    }
   } else {
-    owners = await erc1155OwnersOf(asset, queryBlock, customSubgraph?.erc1155);
+    throw new Error('Caip2 chains besides ETH are not supported yet')
   }
+  
 
   return owners.slice().map(owner => 
     new AccountID({
@@ -62,15 +79,21 @@ async function assetToAccount(asset: AssetID, timestamp: number, customSubgraph?
   );
 }
 
-async function createCaip10Link(account: AccountID, ceramic: CeramicApi): Promise<string | null> {
+async function createCaip10Link(
+  account: AccountID, 
+  timestamp: number, 
+  ceramic: CeramicApi
+): Promise<string | null> {
   const doc = await ceramic.createDocument('caip10-link', {
     metadata: {
       family: 'caip10-link',
       controllers: [AccountID.format(account)]
     }
   });
-  // TODO - enable a way to do this with one request
-  //const docAtTime = await ceramic.loadDocument(doc.id, { atTime })
+  if (timestamp) {
+    const docAtTime = await ceramic.loadDocument(doc.id, { atTime: timestamp });
+    return docAtTime?.content;
+  }
   return doc?.content;
 }
 
@@ -81,13 +104,13 @@ async function createCaip10Link(account: AccountID, ceramic: CeramicApi): Promis
  */
 async function accountsToDids(
   accounts: AccountID[], 
-  atTime: number, 
+  timestamp: number, 
   ceramic: CeramicApi
 ): Promise<string[] | null> {
   const controllers: string[] = [];
 
   for (const account of accounts) {
-    const caip10Link = await createCaip10Link(account, ceramic);
+    const caip10Link = await createCaip10Link(account, timestamp, ceramic);
     if (caip10Link) controllers.push(caip10Link);
   }
 
@@ -127,18 +150,52 @@ function getVersionTime(query = ''): number | undefined {
   }
 }
 
-export enum ErcNamespace {
-  ERC721 = 'erc721',
-  ERC1155 = 'erc1155'
+function validateResolverConfig(config: NftResovlerConfig) {
+  if (!config?.ceramic) {
+    throw new Error('Missing ceramic client in nft-did-resolver config');
+  } else if (config.subGraphUrls) {
+    try {
+      const urlOverrides = config.subGraphUrls;
+      // ensure that any provided chainId and url are valid
+      for (const chainId in urlOverrides) {
+        // check chainId validity
+        ChainID.parse(chainId);
+
+        for (const subgraphUrl in urlOverrides[chainId]) {
+          // assert that each url provided is also valid
+          new URL(urlOverrides[chainId][subgraphUrl]);
+        }
+      }
+    } catch (e) {
+      throw new Error(`Invalid config for nft-did-resolver: ${(<Error> e).message}`);
+    }      
+  }
 }
 
-type SubGraphUrls = {
-  [namespace in ErcNamespace]?: string;
+interface NftNamespaceSubGraphs {
+  [namespace: string]: string;
+}
+
+interface SubGraphUrls {
+  [caip2ChainId: string]: NftNamespaceSubGraphs;
 }
 
 /**
  * When passing in a custom subgraph url, it must conform to the same standards as 
  * represented by the included ERC721 and ERC1155 subgraphs
+ * Example: 
+ * const customConfig = {
+ *   ceramic: ceramicClient,
+ *   subGraphUrls: {
+ *     'eip155:1': {
+ *       erc721: https://api.thegraph.com/subgraphs/name/xxx/yyy,
+ *       erc1155: https://api.thegraph.com/subgraphs/name/abc/xyz
+ *     },
+ *     'cosmos:nft-token-fake-chainid': {
+ *       notreal: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
+ *     }
+ *   }
+ * }
  */
 export interface NftResovlerConfig {
   ceramic: CeramicApi;
@@ -157,11 +214,7 @@ async function resolve(
   const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic);
   const metadata: DIDDocumentMetadata = {};
 
-  // TODO create, update, versionId
-  if (timestamp) {
-    const dateString = (new Date(timestamp * 1000)).toISOString();
-    metadata.versionTime = dateString;
-  }
+  // TODO create (if it stays in the spec)
 
   return {
     didResolutionMetadata: { contentType: DID_JSON },
@@ -172,17 +225,7 @@ async function resolve(
 
 export default {
   getResolver: (config: NftResovlerConfig): ResolverRegistry => {
-    if (!config?.ceramic) {
-      throw new Error('Invalid config for nft-did-resolver')
-    } else if (config.subGraphUrls) {
-      try {
-        // ensure that any provided url is a valid url
-        if (config.subGraphUrls.erc721) new URL(config.subGraphUrls.erc721);
-        if (config.subGraphUrls.erc1155) new URL(config.subGraphUrls.erc1155);
-      } catch (e) {
-        throw new Error(`Invalid subGraphUrl in config for nft-did-resolver: ${e}`);
-      }
-    }
+    validateResolverConfig(config);
     return {
       nft: async (
         did: string, 

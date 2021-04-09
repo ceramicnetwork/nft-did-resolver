@@ -1,4 +1,8 @@
-import NftResolver, { ErcNamespace, NftResovlerConfig } from '../index';
+/**
+ * @jest-environment ceramic
+ */
+
+import NftResolver, { NftResovlerConfig } from '../index';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import Ceramic from '@ceramicnetwork/http-client';
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking';
@@ -10,6 +14,8 @@ import { NftDidVectorBuilder, NftDidVector } from '../testUtils/NftDidVector';
 const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
 const ERC1155_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph';
 const BLOCK_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks';
+
+const ETH_CAIP2_CHAINID = 'eip155:1';
 
 const erc721Contract = '0x7e789e2dd1340971de0a9bca35b14ac0939aa330';
 const erc721Owner = '0x431cf61e7aff8e68142f6263e9fadde40aff8c7d';
@@ -27,10 +33,12 @@ const blockQueryResponse = { data: { blocks: [ { number: blockQueryNumber } ] } 
 
 const caipLinkControllerDid = 'did:3:testing';
 
+enum ErcNamespace {
+  ERC721 = 'erc721',
+  ERC1155 = 'erc1155'
+}
 
 describe('NFT DID Resolver (TheGraph)', () => {
-  const mainChainId = 'eip155:1';
-
   let config: NftResovlerConfig;
   let nftResolver: ResolverRegistry;
   let resolver: Resolver;
@@ -61,28 +69,66 @@ describe('NFT DID Resolver (TheGraph)', () => {
     expect(Object.keys(nftResolver)).toEqual(['nft']);
   });
 
-  it('throws when erc721 subGraphUrls is not a url', () => {
-    const customConfig = {
-      ceramic: new Ceramic(),
-      subGraphUrls: {
-        erc721: 'yikes'
-      }
-    } as NftResovlerConfig;
-    expect(() => NftResolver.getResolver(customConfig))
-      .toThrowError('Invalid subGraphUrl in config for nft-did-resolver: ');
-  })
+  describe('nft-did-resolver config', () => {
 
-  it('throws when erc1155 subGraphUrls is not a url', () => {
-    const customConfig = {
-      ceramic: new Ceramic(),
-      subGraphUrls: {
-        erc1155: 'yikes'
-      }
-    } as NftResovlerConfig;
-    expect(() => NftResolver.getResolver(customConfig))
-      .toThrowError('Invalid subGraphUrl in config for nft-did-resolver: ');
-  })
+    it('does not throw with valid customSubgraphs', () => {
+      const customConfig = {
+        ceramic: new Ceramic(),
+        subGraphUrls: {
+          'eip155:1': {
+            erc721: ERC721_QUERY_URL,
+            erc1155: ERC1155_QUERY_URL,
+          }
+        }
+      } as NftResovlerConfig;
+  
+      expect(() => NftResolver.getResolver(customConfig))
+        .not.toThrow();
+    });
 
+    it('throws when erc721 subGraphUrls is not a url', () => {
+      const badUrl = 'aoeuaoeu';
+      const customConfig = {
+        ceramic: new Ceramic(),
+        subGraphUrls: {
+          'eip155:1': {
+            erc721: badUrl
+          }
+        }
+      } as NftResovlerConfig;
+  
+      expect(() => NftResolver.getResolver(customConfig))
+        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL: ${badUrl}`);
+    });
+  
+    it('throws when erc1155 subGraphUrls is not a url', () => {
+      const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
+      const customConfig = {
+        ceramic: new Ceramic(),
+        subGraphUrls: {
+          'eip155:1': {
+            erc1155: badUrl
+          }
+        }
+      } as NftResovlerConfig;
+      expect(() => NftResolver.getResolver(customConfig))
+        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL: ${badUrl}`);
+    });
+
+    it('throws when the caip2 chainId is malformed', () => {
+      const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
+      const customConfig = {
+        ceramic: new Ceramic(),
+        subGraphUrls: {
+          'eip155.1': {
+            erc1155: ERC1155_QUERY_URL
+          }
+        }
+      } as NftResovlerConfig;
+      expect(() => NftResolver.getResolver(customConfig))
+        .toThrowError('Invalid config for nft-did-resolver: Invalid chainId provided: eip155.1');
+    });
+  });
 
   describe('ERC721 NFTs', () => {
 
@@ -92,7 +138,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.resetMocks();
       fetchMock.mockIf(ERC721_QUERY_URL);
 
-      nftVectorBuilder = new NftDidVectorBuilder(ErcNamespace.ERC721);
+      nftVectorBuilder = new NftDidVectorBuilder(ETH_CAIP2_CHAINID, ErcNamespace.ERC721);
     });
 
     it('resolves an erc721 nft document without caip10-link', async () => {
@@ -168,6 +214,45 @@ describe('NFT DID Resolver (TheGraph)', () => {
       
       await expectVectorResult(resolver, nftVector);
     });
+
+    it('throws when an invalid erc namespace is provided in DID', async () => {
+      const tokenId = '1';
+      const badNamespace = 'erc123';
+
+      const nftVector = new NftDidVectorBuilder(ETH_CAIP2_CHAINID, badNamespace)
+        .setNftContract(erc721Contract)
+        .setNftId(tokenId)
+        .setErrorMessage(`Error: Unrecognized ERC Namespace: ${badNamespace}`)
+        .build();
+      
+      await expectVectorResult(resolver, nftVector);
+    });
+
+    it('resolves erc721 dids with a custom subgraph url', async () => {
+      const custom721Subgraph = 'https://api.thegraph.com/subgraphs/name/dvorak/aoeu';
+      fetchMock.mockIf(custom721Subgraph);
+      fetchMock.mockOnceIf(custom721Subgraph, JSON.stringify(erc721OwnerResponse));
+
+      const customConfig = {
+        ceramic: new Ceramic(),
+        subGraphUrls: {
+          'eip155:1': {
+            erc721: custom721Subgraph
+          }
+        }
+      } as NftResovlerConfig;
+  
+      const customResolver = new Resolver(NftResolver.getResolver(customConfig));
+
+      const nftVector = nftVectorBuilder
+        .setNftContract(erc721Contract)
+        .setNftId('1')
+        .setNftOwners([erc721Owner])
+        .build();
+
+      await expectVectorResult(customResolver, nftVector);
+      expect(fetch.mock.calls[0][0]).toEqual(custom721Subgraph);
+    });
   });
 
   
@@ -179,7 +264,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.resetMocks();
       fetchMock.mockIf(ERC1155_QUERY_URL);
 
-      nftVectorBuilder = new NftDidVectorBuilder(ErcNamespace.ERC1155);
+      nftVectorBuilder = new NftDidVectorBuilder(ETH_CAIP2_CHAINID, ErcNamespace.ERC1155);
     });
 
     it('resolves an erc1155 nft document without caip10-link', async () => {
@@ -257,6 +342,31 @@ describe('NFT DID Resolver (TheGraph)', () => {
         .build();
 
       await expectVectorResult(resolver, nftVector);
+    });
+
+    it('resolves erc1155 dids with a custom subgraph url', async () => {
+      const custom1155Subgraph = 'http://api.thegraph.com/subgraphs/name/aoeuaoeudhtn/subgraph';
+      fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse));
+
+      const customConfig = {
+        ceramic: new Ceramic(),
+        subGraphUrls: {
+          'eip155:1': {
+            erc1155: custom1155Subgraph
+          }
+        }
+      } as NftResovlerConfig;
+  
+      const customResolver = new Resolver(NftResolver.getResolver(customConfig));
+
+      const nftVector = nftVectorBuilder
+        .setNftContract(erc1155Contract)
+        .setNftId('1')
+        .setNftOwners(erc1155Owners)
+        .build();
+
+      await expectVectorResult(customResolver, nftVector);
+      expect(fetch.mock.calls[0][0]).toEqual(custom1155Subgraph);
     });
   });
 });

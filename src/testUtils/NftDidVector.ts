@@ -1,5 +1,4 @@
 import { DIDResolutionResult, VerificationMethod } from "did-resolver";
-import { ErcNamespace } from "..";
 
 export class NftDidVector {
   nftDid: string;
@@ -52,8 +51,6 @@ export class NftDidVector {
       didResolutionMetadata: { contentType: 'application/did+json' }
     } as DIDResolutionResult;
 
-    if (this.versionId) resolutionResult.didDocumentMetadata.versionId = this.versionId;
-    if (this.versionTime) resolutionResult.didDocumentMetadata.versionTime = this.versionTime;
     if (this.caip10Controller) resolutionResult.didDocument.controller = this.caip10Controller;
     return resolutionResult;
   }
@@ -61,7 +58,8 @@ export class NftDidVector {
 
 export class NftDidVectorBuilder {
   
-  public readonly nftNamespace: ErcNamespace;
+  public readonly nftNamespace: string;
+  public readonly caip2ChainId: string;
 
   public nftContract: string;
   public nftId: string;
@@ -75,7 +73,8 @@ export class NftDidVectorBuilder {
 
   public errorMessage: string | undefined;
 
-  constructor(nftNamespace: ErcNamespace) {
+  constructor(caip2ChainId: string, nftNamespace: string) {
+    this.caip2ChainId = caip2ChainId;
     this.nftNamespace = nftNamespace;
   }
 
@@ -114,18 +113,6 @@ export class NftDidVectorBuilder {
     return this;
   }
 
-  withVerificationMethods(): NftDidVectorBuilder {
-    this.verificationMethods = this.nftOwners.slice().map(owner => {
-      return {
-        id: `${this.nftDid}#owner`,
-        type: 'BlockchainVerificationMethod2021',
-        controller: this.nftDid,
-        blockchainAccountId: `${owner}@eip155:1`
-      } as VerificationMethod;
-    });
-    return this;
-  }
-
   setVersionId(versionId: string): NftDidVectorBuilder {
     this.versionId = versionId;
     return this;
@@ -150,7 +137,9 @@ export class NftDidVectorBuilder {
     if (!this.nftContract || !this.nftId) {
       throw new Error("Must provide contract address and id OR DID.")
     }
-    return `did:nft:eip155.1_${this.nftNamespace}.${this.nftContract}_${this.nftId}`;
+    // caip2 uses a colon, while the did uses a period
+    const chainId = this.caip2ChainId.replace(':', '.');
+    return `did:nft:${chainId}_${this.nftNamespace}.${this.nftContract}_${this.nftId}`;
   }
 
   private makeVerificationMethods(): VerificationMethod[] {
@@ -165,7 +154,7 @@ export class NftDidVectorBuilder {
         id: `${this.nftDid}#owner`,
         type: 'BlockchainVerificationMethod2021',
         controller: this.nftDid,
-        blockchainAccountId: `${owner}@eip155:1`
+        blockchainAccountId: `${owner}@${this.caip2ChainId}`
       } as VerificationMethod;
     });
   }
