@@ -51,25 +51,21 @@ async function assetToAccount(
   }
 
   let owners: string[];
-  // dealing with eth mainnet
-  if (asset.chainId.toString() === ETH_CAIP2_CHAINID) {
-    let ethSubgraphUrls = undefined;
 
-    if (customSubgraph && customSubgraph[ETH_CAIP2_CHAINID]) {
-      ethSubgraphUrls = customSubgraph[ETH_CAIP2_CHAINID];
-    }
+  const assetChainId = asset.chainId.toString();
+  let ercSubgraphUrls = undefined;
 
-    if (asset.namespace === 'erc721') {
-      owners = [ await erc721OwnerOf(asset, queryBlock, ethSubgraphUrls?.erc721) ];
-    } else if (asset.namespace === 'erc1155') {
-      owners = await erc1155OwnersOf(asset, queryBlock, ethSubgraphUrls?.erc1155);
-    } else {
-      throw new Error(`Unrecognized ERC Namespace: ${asset.namespace}`);
-    }
-  } else {
-    throw new Error('Caip2 chains besides ETH are not supported yet')
+  if (customSubgraph && customSubgraph[assetChainId]) {
+    ercSubgraphUrls = customSubgraph[assetChainId];
   }
-  
+
+  if (asset.namespace === 'erc721') {
+    owners = [ await erc721OwnerOf(asset, queryBlock, ercSubgraphUrls?.erc721) ];
+  } else if (asset.namespace === 'erc1155') {
+    owners = await erc1155OwnersOf(asset, queryBlock, ercSubgraphUrls?.erc1155);
+  } else {
+    throw new Error(`Only erc721 and erc1155 namespaces are currently supported. Given: ${asset.namespace}`);
+  }
 
   return owners.slice().map(owner => 
     new AccountID({
@@ -192,7 +188,7 @@ interface SubGraphUrls {
  *       erc1155: https://api.thegraph.com/subgraphs/name/abc/xyz
  *     },
  *     'cosmos:nft-token-fake-chainid': {
- *       notreal: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
+ *       erc721: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
  *     }
  *   }
  * }

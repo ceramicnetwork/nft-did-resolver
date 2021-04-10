@@ -31,8 +31,19 @@ const ceramic = new Ceramic() // connects to localhost:7007 by default
 
 const config: NftResovlerConfig = {
   ceramic,
-  customSubgraphUrl: 'https://thegraph.com/explorer/subgraph/sweetusername/yeettoken-subgraph' // optional
-  // customSubgraphUrl: 'http://localhost:8000/subgraphs/name/sweetusername/yeettoken-subgraph' // also works!
+  subGraphUrls: {
+    // CAIP2 ChainID (below is ETH mainnet)
+    'eip155:1': {
+      // Asset namespace
+      erc721: 'https://api.thegraph.com/subgraphs/name/xxx/yyy',
+      // erc721: 'http://localhost:8000/subgraphs/name/aoeu/qjkx' // also works!
+      erc1155: 'https://api.thegraph.com/subgraphs/name/abc/xyz'
+    },
+    // Fake cosmos example
+    'cosmos:nft-token-chainid': {
+      erc721: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
+    }
+  }
 }
 
 // getResolver will return an object with a key/value pair of { 'nft': resolver }
@@ -56,9 +67,12 @@ $ yarn test
 ```
 
 ## Custom Subgraphs
-You may specify a custom subgraph URL in the configuration object as shown above in [usage](#usage).
+You may specify custom subgraph URLs in the configuration object as shown above in [usage](#usage).
 
-Note: custom subgraphs must conform to the below schemas at a *minimum* for assets to be resolved properly.
+**Note**: custom subgraphs must conform to the below schemas at a *minimum* for assets to be resolved properly.
+
+**Note**: At the moment, only ERC721 and ERC1155 asset namespaces are supported. However, CAIP2 chains beside ETH,
+for instance xDAI, with support for those namespaces *are* supported, as long as the subgraph schema is the same.
 
 ### ERC721:
 
@@ -118,19 +132,19 @@ type Balance @entity {
 For more information on writing schemas for GraphProtocol, check out [their documentation](https://thegraph.com/docs/define-a-subgraph#defining-entities).
 
 ## DID Specs
-The token DIDs are prefixed with `did:nft:`, and the latter half is a modified CAIP namespace.
+The token DIDs are prefixed with `did:nft:`, and the latter half is a modified CAIP format.
 
 **ERC721** ([CAIP-22](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-22.md))
 
-DID: `did:nft:eip155.{chainId}_erc721.{contractAddress}_{tokenId}`
+DID: `did:nft:{chainNamespace}.{chainReference}_erc721.{contractAddress}_{tokenId}`
 
-CAIP-22: `eip155:{chainId}/erc721:{contractAddress}/{tokenId}`
+CAIP-22: `{chainNamespace}:{chainReference}/erc721:{contractAddress}/{tokenId}`
 
 **ERC1155** ([CAIP-29](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-29.md))
 
-DID: `did:nft:eip155.{chainId}_erc1155.{contractAddress}_{tokenId}`
+DID: `did:nft:{chainNamespace}.{chainReference}_erc1155.{contractAddress}_{tokenId}`
 
-CAIP-29: `eip155:{chainId}/erc1155:{contractAddress}/{tokenId}`
+CAIP-29: `{chainNamespace}:{chainReference}/erc1155:{contractAddress}/{tokenId}`
 
 
 ### Conversions
