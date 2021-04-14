@@ -17,6 +17,7 @@ To resolve DIDs using your own subgraph, see [Custom Subgraphs](#custom-subgraph
 ### Installation
 ```
 $ npm install nft-did-resolver
+// or
 $ yarn add nft-did-resolver
 ```
 
@@ -31,7 +32,7 @@ const ceramic = new Ceramic() // connects to localhost:7007 by default
 
 const config: NftResovlerConfig = {
   ceramic,
-  subGraphUrls: {
+  subGraphUrls: { // optional, there are defaults for ethereum mainnet (erc721 and erc1155)
     // CAIP2 ChainID (below is ETH mainnet)
     'eip155:1': {
       // Asset namespace
