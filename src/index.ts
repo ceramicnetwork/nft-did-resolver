@@ -12,8 +12,6 @@ import { ChainID, AccountID } from 'caip';
 import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
 import { DIDDocumentMetadata } from 'did-resolver';
 
-const ETH_CAIP2_CHAINID = 'eip155:1';
-
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
 
@@ -45,7 +43,7 @@ async function assetToAccount(
   customSubgraph?: SubGraphUrls
 ): Promise<AccountID[]> {
   // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
-  let queryBlock: number = undefined;
+  let queryBlock = 0;
   if (timestamp && !isWithinLastBlock(timestamp)) {
     queryBlock = await blockAtTime(timestamp);
   }
@@ -102,7 +100,7 @@ async function accountsToDids(
   accounts: AccountID[], 
   timestamp: number, 
   ceramic: CeramicApi
-): Promise<string[] | null> {
+): Promise<string[] | undefined> {
   const controllers: string[] = [];
 
   for (const account of accounts) {
@@ -110,7 +108,7 @@ async function accountsToDids(
     if (caip10Link) controllers.push(caip10Link);
   }
 
-  return controllers.length > 0 ? controllers : null;
+  return controllers.length > 0 ? controllers : undefined;
 }
 
 function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]): DIDDocument {
@@ -139,11 +137,12 @@ function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]
  * Gets the unix timestamp from the `versionTime` parameter.
  * @param query
  */
-function getVersionTime(query = ''): number | undefined {
+function getVersionTime(query = ''): number {
   const versionTime = query.split('&').find(e => e.includes('versionTime'))
   if (versionTime) {
     return Math.floor((new Date(versionTime.split('=')[1])).getTime() / 1000)
   }
+  return 0; // 0 is falsey
 }
 
 function validateResolverConfig(config: NftResovlerConfig) {
@@ -235,6 +234,8 @@ export default {
           const didResult = await resolve(did, parsed.id, timestamp, config)
 
           if (contentType === DID_LD_JSON) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore: Object is possibly 'null'
             didResult.didDocument['@context'] = 'https://w3id.org/did/v1'
             didResult.didResolutionMetadata.contentType = DID_LD_JSON
           } else if (contentType !== DID_JSON) {

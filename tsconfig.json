@@ -5,7 +5,10 @@
     "rootDir": "src",
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true
   },
   "include": ["./src/**/*"],
   "exclude": [

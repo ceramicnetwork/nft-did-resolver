@@ -115,7 +115,6 @@ describe('NFT DID Resolver (TheGraph)', () => {
     });
 
     it('throws when the caip2 chainId is malformed', () => {
-      const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
       const customConfig = {
         ceramic: ceramic,
         subGraphUrls: {
