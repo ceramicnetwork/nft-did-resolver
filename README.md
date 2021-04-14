@@ -77,7 +77,7 @@ for instance xDAI, with support for those namespaces *are* supported, as long as
 
 ### ERC721:
 
-```
+```gql
 type Token @entity {
   id: ID!
   contract: TokenContract!
@@ -100,7 +100,7 @@ type Owner @entity {
 ```
 
 ### ERC1155:
-```
+```gql
 type Account @entity {
   id: ID!
   balances: [Balance!]! @derivedFrom(field: "account")
