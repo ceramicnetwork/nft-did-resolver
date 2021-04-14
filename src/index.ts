@@ -4,41 +4,136 @@ import type {
   DIDDocument,
   ParsedDID,
   Resolver,
-  ResolverRegistry
-} from 'did-resolver'
-import type { DocState, CeramicApi } from "@ceramicnetwork/common"
-import { ChainID, AccountID } from 'caip'
-import fetch from 'cross-fetch'
-import * as u8a from 'uint8arrays'
+  ResolverRegistry,
+  VerificationMethod
+} from 'did-resolver';
+import type { CeramicApi } from '@ceramicnetwork/common';
+import { ChainID, AccountID } from 'caip';
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
+import { DIDDocumentMetadata } from 'did-resolver';
 
-const erc721OwnerOf = async (asset: AssetID, rpcUrl: string): Promise<any> =>  {
-  const id = u8a.toString(u8a.fromString(asset.tokenId, 'base10'), 'base16')
-  const opts = {
-    method: 'POST',
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'eth_call',
-      params:[{
-        data: '0x6352211e' + '0'.repeat(64 - id.length) + id,
-        to: asset.reference
-      }, 'latest']
-    })
-  }
-  const r = await fetch(rpcUrl, opts)
-  if (r.ok) {
-    const { result, error } = await r.json()
-    if (error) throw new Error(error.message)
-    // convert to ethereum address
-    return '0x' + result.slice(26)
-  } else {
-    throw new Error('Not a valid NFT id')
-  }
-}
-
+const ETH_CAIP2_CHAINID = 'eip155:1';
 
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
+
+
+// TODO - should be part of the caip library
+export interface AssetID {
+  chainId: ChainID
+  namespace: string
+  reference: string
+  tokenId: string
+}
+
+function idToAsset(id: string): AssetID {
+  // TODO use caip package to do this once it supports assetIds
+  const [chainid, assetType, tokenId] = id.split('_');
+  const [namespace, reference] = assetType.split('.');
+  
+  return {
+    chainId: new ChainID(ChainID.parse(chainid.replace('.', ':'))),
+    namespace,
+    reference,
+    tokenId
+  }
+}
+
+async function assetToAccount(
+  asset: AssetID, 
+  timestamp: number, 
+  customSubgraph?: SubGraphUrls
+): Promise<AccountID[]> {
+  // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
+  let queryBlock: number = undefined;
+  if (timestamp && !isWithinLastBlock(timestamp)) {
+    queryBlock = await blockAtTime(timestamp);
+  }
+
+  let owners: string[];
+
+  const assetChainId = asset.chainId.toString();
+  let ercSubgraphUrls = undefined;
+
+  if (customSubgraph && customSubgraph[assetChainId]) {
+    ercSubgraphUrls = customSubgraph[assetChainId];
+  }
+
+  if (asset.namespace === 'erc721') {
+    owners = [ await erc721OwnerOf(asset, queryBlock, ercSubgraphUrls?.erc721) ];
+  } else if (asset.namespace === 'erc1155') {
+    owners = await erc1155OwnersOf(asset, queryBlock, ercSubgraphUrls?.erc1155);
+  } else {
+    throw new Error(`Only erc721 and erc1155 namespaces are currently supported. Given: ${asset.namespace}`);
+  }
+
+  return owners.slice().map(owner => 
+    new AccountID({
+      chainId: asset.chainId,
+      address: owner
+    })
+  );
+}
+
+async function createCaip10Link(
+  account: AccountID, 
+  timestamp: number, 
+  ceramic: CeramicApi
+): Promise<string | null> {
+  const doc = await ceramic.createDocument('caip10-link', {
+    metadata: {
+      family: 'caip10-link',
+      controllers: [AccountID.format(account)]
+    }
+  });
+  if (timestamp) {
+    const docAtTime = await ceramic.loadDocument(doc.id, { atTime: timestamp });
+    return docAtTime?.content;
+  }
+  return doc?.content;
+}
+
+/**
+ * Creates CAIP-10 links for each account to be used as controllers. 
+ * Since there may be many owners for a given NFT (only ERC1155 for now), there can be many
+ * controllers of that DID document.
+ */
+async function accountsToDids(
+  accounts: AccountID[], 
+  timestamp: number, 
+  ceramic: CeramicApi
+): Promise<string[] | null> {
+  const controllers: string[] = [];
+
+  for (const account of accounts) {
+    const caip10Link = await createCaip10Link(account, timestamp, ceramic);
+    if (caip10Link) controllers.push(caip10Link);
+  }
+
+  return controllers.length > 0 ? controllers : null;
+}
+
+function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]): DIDDocument {
+  // Each of the owning accounts is a verification method (at the point in time)
+  const verificationMethods = accounts.slice().map(account => {
+    return {
+      id: `${did}#owner`,
+      type: 'BlockchainVerificationMethod2021',
+      controller: did,
+      blockchainAccountId: account.toString()
+    } as VerificationMethod;
+  });
+
+  const doc: DIDDocument = {
+    id: did,
+    verificationMethod: [...verificationMethods]
+  }
+  
+  // Controllers should only be an array when there're more than one
+  if (controllers) doc.controller = controllers.length === 1 ? controllers[0] : controllers;
+  
+  return doc;
+}
 
 /**
  * Gets the unix timestamp from the `versionTime` parameter.
@@ -51,60 +146,56 @@ function getVersionTime(query = ''): number | undefined {
   }
 }
 
-// TODO - should be part of the caip library
-interface AssetID {
-  chainId: ChainID
-  namespace: string
-  reference: string
-  tokenId: string
-}
+function validateResolverConfig(config: NftResovlerConfig) {
+  if (!config?.ceramic) {
+    throw new Error('Missing ceramic client in nft-did-resolver config');
+  } else if (config.subGraphUrls) {
+    try {
+      const urlOverrides = config.subGraphUrls;
+      // ensure that any provided chainId and url are valid
+      for (const chainId in urlOverrides) {
+        // check chainId validity
+        ChainID.parse(chainId);
 
-function idToAsset(id: string): AssetID {
-  // TODO use caip package to do this once it supports assetids
-  const [chainid, assetType, tokenId] = id.split('_')
-  const [namespace, reference] = assetType.split('.')
-  return {
-    chainId: ChainID.parse(chainid.replace('.', ':')),
-    namespace,
-    reference,
-    tokenId
+        for (const subgraphUrl in urlOverrides[chainId]) {
+          // assert that each url provided is also valid
+          new URL(urlOverrides[chainId][subgraphUrl]);
+        }
+      }
+    } catch (e) {
+      throw new Error(`Invalid config for nft-did-resolver: ${(<Error> e).message}`);
+    }      
   }
 }
 
-async function assetToAccount(asset: AssetID, timestamp: string, rpcUrl: string): Promise<AccountID> {
-  const owner = await erc721OwnerOf(asset, rpcUrl)
-  return new AccountID({
-    chainId: asset.chainId,
-    address: owner
-  })
+interface NftNamespaceSubGraphs {
+  [namespace: string]: string;
 }
 
-async function accountToDid(account: AccountID, atTime: number, ceramic: CeramicApi): Promise<string | null> {
-  const doc = await ceramic.createDocument('caip10-link', {
-    metadata: {
-      family: 'caip10-link',
-      controllers: [AccountID.format(account)]
-    }
-  })
-  // TODO - enable a way to do this with one request
-  //const docAtTime = await ceramic.loadDocument(doc.id, { atTime })
-  return doc?.content
+interface SubGraphUrls {
+  [caip2ChainId: string]: NftNamespaceSubGraphs;
 }
 
-function wrapDocument(did: string, account: AccountID, controller?: string): DIDDocument {
-  const doc: DIDDocument = {
-    id: did,
-    verificationMethod: [{
-      id: did + '#owner',
-      type: 'BlockchainVerificationMethod2021',
-      controller: did,
-      blockchainAccountId: account.toString()
-    }]
-  }
-  if (controller) {
-    doc.controller = controller
-  }
-  return doc
+/**
+ * When passing in a custom subgraph url, it must conform to the same standards as 
+ * represented by the included ERC721 and ERC1155 subgraphs
+ * Example: 
+ * const customConfig = {
+ *   ceramic: ceramicClient,
+ *   subGraphUrls: {
+ *     'eip155:1': {
+ *       erc721: https://api.thegraph.com/subgraphs/name/xxx/yyy,
+ *       erc1155: https://api.thegraph.com/subgraphs/name/abc/xyz
+ *     },
+ *     'cosmos:nft-token-fake-chainid': {
+ *       erc721: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
+ *     }
+ *   }
+ * }
+ */
+export interface NftResovlerConfig {
+  ceramic: CeramicApi;
+  subGraphUrls?: SubGraphUrls;
 }
 
 async function resolve(
@@ -113,33 +204,31 @@ async function resolve(
   timestamp: number,
   config: NftResovlerConfig
 ): Promise<DIDResolutionResult> {
-  const asset = idToAsset(methodId)
-  const ethRpc = config.ethereumRpcs[ChainID.format(asset.chainId)]
-  const account = await assetToAccount(asset, timestamp, ethRpc)
-  const controller = await accountToDid(account, timestamp, config.ceramic)
+  const asset = idToAsset(methodId);
+  // for 1155s, there can be many accounts that own a single asset
+  const owningAccounts = await assetToAccount(asset, timestamp, config.subGraphUrls);
+  const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic);
+  const metadata: DIDDocumentMetadata = {};
+
+  // TODO create (if it stays in the spec)
+
   return {
     didResolutionMetadata: { contentType: DID_JSON },
-    didDocument: wrapDocument(did, account, controller),
-    didDocumentMetadata: {}
-  }
-}
-
-interface EthereumRpcEndpoints {
-  [chainId: string]: string
-}
-
-interface NftResovlerConfig {
-  ceramic: CeramicApi
-  ethereumRpcs: EthereumRpcEndpoints
+    didDocument: wrapDocument(did, owningAccounts, controllers),
+    didDocumentMetadata: metadata
+  } as DIDResolutionResult;
 }
 
 export default {
   getResolver: (config: NftResovlerConfig): ResolverRegistry => {
-    if (!config.ceramic || !config.ethereumRpcs) {
-      throw new Error('Invalid config for nft-did-resolver')
-    }
+    validateResolverConfig(config);
     return {
-      nft: async (did: string, parsed: ParsedDID, resolver: Resolver, options: DIDResolutionOptions): Promise<DIDResolutionResult> => {
+      nft: async (
+        did: string, 
+        parsed: ParsedDID, 
+        resolver: Resolver, 
+        options: DIDResolutionOptions
+      ): Promise<DIDResolutionResult> => {
         const contentType = options.accept || DID_JSON
         try {
           const timestamp = getVersionTime(parsed.query)
