@@ -115,7 +115,6 @@ describe('NFT DID Resolver (TheGraph)', () => {
     });
 
     it('throws when the caip2 chainId is malformed', () => {
-      const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
       const customConfig = {
         ceramic: ceramic,
         subGraphUrls: {
@@ -250,7 +249,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         .build();
 
       await expectVectorResult(customResolver, nftVector);
-      expect(fetch.mock.calls[0][0]).toEqual(custom721Subgraph);
+      expect(fetchMock.mock.calls[0][0]).toEqual(custom721Subgraph);
     });
 
     it('allows for erc721 namespace on caip2 chains beside eth', async () => {
@@ -390,7 +389,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         .build();
 
       await expectVectorResult(customResolver, nftVector);
-      expect(fetch.mock.calls[0][0]).toEqual(custom1155Subgraph);
+      expect(fetchMock.mock.calls[0][0]).toEqual(custom1155Subgraph);
     });
 
     it('allows for erc1155 namespace on caip2 chains beside eth', async () => {
@@ -434,13 +433,17 @@ const isoTimeToTimestamp = (versionTime: string) => {
 function expectBlockQueries(versionTime: string) {
   // Note: For each indexed call, the 0th elem is the url, and the 1st elem is what was sent to fetch
   // the first call will be to query the block at timestamp
-  expect(fetch.mock.calls[0][0]).toEqual(BLOCK_QUERY_URL);
+  expect(fetchMock.mock.calls[0][0]).toEqual(BLOCK_QUERY_URL);
 
   // check that the call includes the timestamp
-  expect(fetch.mock.calls[0][1].body.includes(`timestamp_lte: ${isoTimeToTimestamp(versionTime)}`)).toBe(true);
+  expect(fetchMock.mock.calls[0][1].body.toString()
+    .includes(`timestamp_lte: ${isoTimeToTimestamp(versionTime)}`))
+    .toBe(true);
 
   // check that the call to the NFT subgraph includes the mocked block number
-  expect(fetch.mock.calls[1][1].body.includes(`number: ${blockQueryNumber}`)).toBe(true);
+  expect(fetchMock.mock.calls[1][1].body.toString()
+    .includes(`number: ${blockQueryNumber}`))
+    .toBe(true);
 }
 
 async function createCaip10Link(ethAuthProv: EthereumAuthProvider) {

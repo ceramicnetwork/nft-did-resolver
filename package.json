@@ -39,6 +39,7 @@
     "@ceramicnetwork/blockchain-utils-linking": "^0.3.0",
     "@ceramicnetwork/core": "^0.21.0",
     "@ceramicnetwork/http-client": "^0.10.1",
+    "@types/jest": "^26.0.22",
     "@types/node": "^13.13.15",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",

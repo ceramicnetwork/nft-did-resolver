@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { DIDResolutionResult, VerificationMethod } from "did-resolver";
-
 export class NftDidVector {
   nftDid: string;
-  nftOwners: string[];
-  verificationMethods: VerificationMethod[];
+  nftOwners: string[] | undefined;
+  verificationMethods: VerificationMethod[] | undefined;
   versionId: string | undefined;
   versionTime: string | undefined;
   caip10Controller: string | undefined;
@@ -45,12 +45,14 @@ export class NftDidVector {
     const resolutionResult = {
       didDocument: {
         id: this.nftDid,
-        verificationMethod: [...this.verificationMethods]
       },
       didDocumentMetadata: {},
       didResolutionMetadata: { contentType: 'application/did+json' }
     } as DIDResolutionResult;
 
+    // @ts-ignore: Object is possibly 'null'
+    if (this.verificationMethods) resolutionResult.didDocument.verificationMethod = [...this.verificationMethods];
+    // @ts-ignore: Object is possibly 'null'
     if (this.caip10Controller) resolutionResult.didDocument.controller = this.caip10Controller;
     return resolutionResult;
   }
@@ -61,12 +63,12 @@ export class NftDidVectorBuilder {
   public readonly nftNamespace: string;
   public readonly caip2ChainId: string;
 
-  public nftContract: string;
-  public nftId: string;
-  public nftDid: string;
-  public nftOwners: string[];
+  public nftDid = ''; // falsey, will throw if not made or provided
+  public nftContract: string | undefined;
+  public nftId: string | undefined;
+  public nftOwners: string[] | undefined;
 
-  public verificationMethods: VerificationMethod[];
+  public verificationMethods: VerificationMethod[] | undefined;
   public versionId: string | undefined;
   public versionTime: string | undefined;
   public caip10Controller: string | undefined;
