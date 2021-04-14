@@ -10,6 +10,10 @@
   ],
   "author": "Joel Torstensson <oed3933@gmail.com>",
   "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ceramicnetwork/nft-did-resolver.git"
+  },
   "license": "(Apache-2.0 OR MIT)",
   "main": "lib/index.js",
   "directories": {
@@ -24,7 +28,8 @@
     "prepublishOnly": "npm run build",
     "prebuild": "npm run clean",
     "lint": "./node_modules/.bin/eslint ./src --ext .js,.jsx,.ts,.tsx",
-    "clean": "rm -rf ./lib"
+    "clean": "rm -rf ./lib",
+    "chain": "./node_modules/.bin/ganache-cli --port 8546"
   },
   "dependencies": {
     "@ceramicnetwork/common": "^0.17.0",

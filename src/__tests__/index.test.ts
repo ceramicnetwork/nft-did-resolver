@@ -56,7 +56,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     
     // Set up the EthAuthProvider
-    const ethRpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+    const ethRpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8546')
     const ethSigner = ethRpcProvider.getSigner(1);
     ethAccount = (await ethSigner.getAddress()).toLowerCase()
 
