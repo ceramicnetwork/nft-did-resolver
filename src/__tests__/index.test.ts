@@ -5,6 +5,7 @@
 import NftResolver, { NftResovlerConfig } from '../index';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking';
+import { Caip10Link } from '@ceramicnetwork/stream-caip10-link';
 import * as u8a from 'uint8arrays';
 import fetchMock from 'jest-fetch-mock';
 import { ethers } from 'ethers'
@@ -37,6 +38,11 @@ enum ErcNamespace {
   ERC1155 = 'erc1155'
 }
 
+// TODO
+// "Error while storing commit to IPFS: Error: ENOENT"
+// may be a dependency issue - look into updating IPFS core / deps
+// in https://github.com/ceramicstudio/js-idx/blob/master/packages/jest-environment-ceramic/index.j
+
 describe('NFT DID Resolver (TheGraph)', () => {
   let config: NftResovlerConfig;
   let nftResolver: ResolverRegistry;
@@ -48,7 +54,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
   beforeAll(async () => {
     config = {
-      ceramic: ceramic
+      ceramic: (global as any).ceramic
     };
 
     nftResolver = NftResolver.getResolver(config);
@@ -61,7 +67,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     ethAccount = (await ethSigner.getAddress()).toLowerCase()
 
     ethAuthProv = createEthAuthProvider(ethSigner, ethAccount);
-    await createCaip10Link(ethAuthProv, config.ceramic);
+    await createCaip10Link(ethAuthProv);
   });
 
   it('getResolver works correctly', () => {
@@ -72,7 +78,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     it('does not throw with valid customSubgraphs', () => {
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc721: ERC721_QUERY_URL,
@@ -88,7 +94,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     it('throws when erc721 subGraphUrls is not a url', () => {
       const badUrl = 'aoeuaoeu';
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc721: badUrl
@@ -103,7 +109,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     it('throws when erc1155 subGraphUrls is not a url', () => {
       const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc1155: badUrl
@@ -116,7 +122,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     it('throws when the caip2 chainId is malformed', () => {
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155.1': {
             erc1155: ERC1155_QUERY_URL
@@ -232,7 +238,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(custom721Subgraph, JSON.stringify(erc721OwnerResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc721: custom721Subgraph
@@ -258,7 +264,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(cosmos721Subgraph, JSON.stringify(erc721OwnerResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'cosmos:iov-nftnet': {
             erc721: cosmos721Subgraph
@@ -372,7 +378,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc1155: custom1155Subgraph
@@ -398,7 +404,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'cosmos:iov-mainnet': {
             erc1155: custom1155Subgraph
@@ -447,11 +453,16 @@ function expectBlockQueries(versionTime: string) {
 }
 
 async function createCaip10Link(ethAuthProv: EthereumAuthProvider) {
-  const proof = await ethAuthProv.createLink(caipLinkControllerDid);
-  const doc = await ceramic.createDocument('caip10-link', {
-    metadata: { family: 'caip10-link', controllers: [proof.account] }
-  });
-  await doc.change({ content: proof });
+  const accountId = await ethAuthProv.accountId()
+  const link = await Caip10Link.fromAccount((global as any).ceramic, accountId, {})
+  // NOTE: does this work?
+  link.setDid(caipLinkControllerDid, ethAuthProv)
+  
+  // const proof = await ethAuthProv.createLink(caipLinkControllerDid);
+  // const doc = await ceramic.createDocument('caip10-link', {
+  //   metadata: { family: 'caip10-link', controllers: [proof.account] }
+  // });
+  // await doc.change({ content: proof });
 }
 
 function createEthAuthProvider(ethSigner: ethers.providers.JsonRpcSigner, ethAccount: string) {

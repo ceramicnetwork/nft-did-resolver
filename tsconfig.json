@@ -5,6 +5,7 @@
     "rootDir": "src",
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "declaration": true,
     "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": true,

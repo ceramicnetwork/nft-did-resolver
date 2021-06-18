@@ -8,12 +8,13 @@ import type {
   VerificationMethod
 } from 'did-resolver';
 import type { CeramicApi } from '@ceramicnetwork/common';
+import { Caip10Link } from '@ceramicnetwork/stream-caip10-link';
 import { ChainID, AccountID } from 'caip';
-import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
 import { DIDDocumentMetadata } from 'did-resolver';
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
 
-const DID_LD_JSON = 'application/did+ld+json'
-const DID_JSON = 'application/did+json'
+const DID_LD_JSON = 'application/did+ld+json';
+const DID_JSON = 'application/did+json';
 
 
 // TODO - should be part of the caip library
@@ -73,24 +74,6 @@ async function assetToAccount(
   );
 }
 
-async function createCaip10Link(
-  account: AccountID, 
-  timestamp: number, 
-  ceramic: CeramicApi
-): Promise<string | null> {
-  const doc = await ceramic.createDocument('caip10-link', {
-    metadata: {
-      family: 'caip10-link',
-      controllers: [AccountID.format(account)]
-    }
-  });
-  if (timestamp) {
-    const docAtTime = await ceramic.loadDocument(doc.id, { atTime: timestamp });
-    return docAtTime?.content;
-  }
-  return doc?.content;
-}
-
 /**
  * Creates CAIP-10 links for each account to be used as controllers. 
  * Since there may be many owners for a given NFT (only ERC1155 for now), there can be many
@@ -98,14 +81,15 @@ async function createCaip10Link(
  */
 async function accountsToDids(
   accounts: AccountID[], 
-  timestamp: number, 
+  // NOTE: Opts: { atTime: timestamp } no longer applicable for create?
+  // timestamp: number, 
   ceramic: CeramicApi
 ): Promise<string[] | undefined> {
   const controllers: string[] = [];
 
-  for (const account of accounts) {
-    const caip10Link = await createCaip10Link(account, timestamp, ceramic);
-    if (caip10Link) controllers.push(caip10Link);
+  for (const accountId of accounts) {
+    const link = await Caip10Link.fromAccount(ceramic, accountId);
+    if (link?.did) controllers.push(link.did);
   }
 
   return controllers.length > 0 ? controllers : undefined;
@@ -206,7 +190,7 @@ async function resolve(
   const asset = idToAsset(methodId);
   // for 1155s, there can be many accounts that own a single asset
   const owningAccounts = await assetToAccount(asset, timestamp, config.subGraphUrls);
-  const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic);
+  const controllers = await accountsToDids(owningAccounts, /* timestamp, */ config.ceramic);
   const metadata: DIDDocumentMetadata = {};
 
   // TODO create (if it stays in the spec)
