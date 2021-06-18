@@ -9,6 +9,9 @@
     "Data"
   ],
   "author": "Joel Torstensson <oed3933@gmail.com>",
+  "contributors": [
+    "Mike Roth <mike@manyuses.com>"
+  ],
   "homepage": "",
   "repository": {
     "type": "git",
@@ -32,7 +35,7 @@
     "chain": "./node_modules/.bin/ganache-cli --port 8546"
   },
   "dependencies": {
-    "@ceramicnetwork/common": "^0.17.0",
+    "@ceramicnetwork/common": "^1.0.6",
     "cross-fetch": "^3.0.6",
     "json-to-graphql-query": "^2.0.0",
     "uint8arrays": "^2.0.5"
@@ -41,9 +44,8 @@
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.8.4",
     "@babel/preset-typescript": "^7.9.0",
-    "@ceramicnetwork/blockchain-utils-linking": "^0.3.0",
-    "@ceramicnetwork/core": "^0.21.0",
-    "@ceramicnetwork/http-client": "^0.10.1",
+    "@ceramicnetwork/blockchain-utils-linking": "^1.0.2",
+    "@ceramicnetwork/core": "^1.1.0",
     "@polkadot/util": "^5.9.2",
     "@types/jest": "^26.0.22",
     "@types/node": "^13.13.15",
