@@ -2,7 +2,7 @@
  * @jest-environment ceramic
  */
 
-import NftResolver, { NftResovlerConfig } from '../index';
+import NftResolver, { NftResolverConfig } from '../index';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking';
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link';
@@ -38,13 +38,12 @@ enum ErcNamespace {
   ERC1155 = 'erc1155'
 }
 
-// TODO
-// "Error while storing commit to IPFS: Error: ENOENT"
-// may be a dependency issue - look into updating IPFS core / deps
-// in https://github.com/ceramicstudio/js-idx/blob/master/packages/jest-environment-ceramic/index.j
+// since v1, tests require more time updated
+// to 12s timeout to prevent test timeouts
+jest.setTimeout(12000);
 
 describe('NFT DID Resolver (TheGraph)', () => {
-  let config: NftResovlerConfig;
+  let config: NftResolverConfig;
   let nftResolver: ResolverRegistry;
   let resolver: Resolver;
 
@@ -85,13 +84,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc1155: ERC1155_QUERY_URL,
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       expect(() => NftResolver.getResolver(customConfig))
         .not.toThrow();
     });
 
-    it('throws when erc721 subGraphUrls is not a url', () => {
+    it('throws when erc721 subGraphUrl is not a url', () => {
       const badUrl = 'aoeuaoeu';
       const customConfig = {
         ceramic: (global as any).ceramic,
@@ -100,13 +99,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc721: badUrl
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       expect(() => NftResolver.getResolver(customConfig))
-        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL: ${badUrl}`);
+        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL`);
     });
   
-    it('throws when erc1155 subGraphUrls is not a url', () => {
+    it('throws when erc1155 subGraphUrl is not a url', () => {
       const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
       const customConfig = {
         ceramic: (global as any).ceramic,
@@ -115,9 +114,9 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc1155: badUrl
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
       expect(() => NftResolver.getResolver(customConfig))
-        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL: ${badUrl}`);
+        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL`);
     });
 
     it('throws when the caip2 chainId is malformed', () => {
@@ -128,7 +127,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc1155: ERC1155_QUERY_URL
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
       expect(() => NftResolver.getResolver(customConfig))
         .toThrowError('Invalid config for nft-did-resolver: Invalid chainId provided: eip155.1');
     });
@@ -244,7 +243,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc721: custom721Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -270,7 +269,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc721: cosmos721Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -321,7 +320,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         .setCaip10Controller(caipLinkControllerDid)
         .build();
 
-      await expectVectorResult(resolver, nftVector);
+        await expectVectorResult(resolver, nftVector);
     });
 
     it('resolves an erc1155 nft doc with an older timestamp', async () => {
@@ -384,7 +383,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc1155: custom1155Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -410,7 +409,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
             erc1155: custom1155Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -426,8 +425,8 @@ describe('NFT DID Resolver (TheGraph)', () => {
 });
 
 const expectVectorResult = async (resolver: Resolver, nftVector: NftDidVector) => {
-  expect(await resolver.resolve(nftVector.nftDid))
-    .toEqual(nftVector.getResult());
+  const result = await resolver.resolve(nftVector.nftDid);
+  expect(result).toEqual(nftVector.getResult());
 }
 
 // a helper to do the same operation as in the resolver
@@ -455,8 +454,8 @@ function expectBlockQueries(versionTime: string) {
 async function createCaip10Link(ethAuthProv: EthereumAuthProvider) {
   const accountId = await ethAuthProv.accountId()
   const link = await Caip10Link.fromAccount((global as any).ceramic, accountId, {})
-  // NOTE: does this work?
-  link.setDid(caipLinkControllerDid, ethAuthProv)
+  // NOTE: is this correct?
+  await link.setDid(caipLinkControllerDid, ethAuthProv)
   
   // const proof = await ethAuthProv.createLink(caipLinkControllerDid);
   // const doc = await ceramic.createDocument('caip10-link', {

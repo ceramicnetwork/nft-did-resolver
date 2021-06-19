@@ -129,7 +129,7 @@ function getVersionTime(query = ''): number {
   return 0; // 0 is falsey
 }
 
-function validateResolverConfig(config: NftResovlerConfig) {
+function validateResolverConfig(config: NftResolverConfig) {
   if (!config?.ceramic) {
     throw new Error('Missing ceramic client in nft-did-resolver config');
   } else if (config.subGraphUrls) {
@@ -176,7 +176,7 @@ interface SubGraphUrls {
  *   }
  * }
  */
-export interface NftResovlerConfig {
+export interface NftResolverConfig {
   ceramic: CeramicApi;
   subGraphUrls?: SubGraphUrls;
 }
@@ -185,7 +185,7 @@ async function resolve(
   did: string,
   methodId: string,
   timestamp: number,
-  config: NftResovlerConfig
+  config: NftResolverConfig
 ): Promise<DIDResolutionResult> {
   const asset = idToAsset(methodId);
   // for 1155s, there can be many accounts that own a single asset
@@ -203,7 +203,7 @@ async function resolve(
 }
 
 export default {
-  getResolver: (config: NftResovlerConfig): ResolverRegistry => {
+  getResolver: (config: NftResolverConfig): ResolverRegistry => {
     validateResolverConfig(config);
     return {
       nft: async (
