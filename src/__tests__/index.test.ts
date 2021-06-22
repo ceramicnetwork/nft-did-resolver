@@ -454,14 +454,7 @@ function expectBlockQueries(versionTime: string) {
 async function createCaip10Link(ethAuthProv: EthereumAuthProvider) {
   const accountId = await ethAuthProv.accountId()
   const link = await Caip10Link.fromAccount((global as any).ceramic, accountId, {})
-  // NOTE: is this correct?
   await link.setDid(caipLinkControllerDid, ethAuthProv)
-  
-  // const proof = await ethAuthProv.createLink(caipLinkControllerDid);
-  // const doc = await ceramic.createDocument('caip10-link', {
-  //   metadata: { family: 'caip10-link', controllers: [proof.account] }
-  // });
-  // await doc.change({ content: proof });
 }
 
 function createEthAuthProvider(ethSigner: ethers.providers.JsonRpcSigner, ethAccount: string) {
