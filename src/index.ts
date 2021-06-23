@@ -81,14 +81,13 @@ async function assetToAccount(
  */
 async function accountsToDids(
   accounts: AccountID[], 
-  // NOTE: Opts: { atTime: timestamp } no longer applicable for create?
-  // timestamp: number, 
+  timestamp: number, 
   ceramic: CeramicApi
 ): Promise<string[] | undefined> {
   const controllers: string[] = [];
 
   for (const accountId of accounts) {
-    const link = await Caip10Link.fromAccount(ceramic, accountId);
+    const link = await Caip10Link.fromAccount(ceramic, accountId, { atTime: timestamp });
     if (link?.did) controllers.push(link.did);
   }
 
@@ -190,7 +189,7 @@ async function resolve(
   const asset = idToAsset(methodId);
   // for 1155s, there can be many accounts that own a single asset
   const owningAccounts = await assetToAccount(asset, timestamp, config.subGraphUrls);
-  const controllers = await accountsToDids(owningAccounts, /* timestamp, */ config.ceramic);
+  const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic);
   const metadata: DIDDocumentMetadata = {};
 
   // TODO create (if it stays in the spec)

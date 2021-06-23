@@ -36,8 +36,8 @@
     "chain": "./node_modules/.bin/ganache-cli --port 8546"
   },
   "dependencies": {
-    "@ceramicnetwork/common": "^1.0.6",
-    "@ceramicnetwork/stream-caip10-link": "^1.0.6",
+    "@ceramicnetwork/common": "^1.0.7",
+    "@ceramicnetwork/stream-caip10-link": "^1.0.7",
     "cross-fetch": "^3.0.6",
     "json-to-graphql-query": "^2.0.0",
     "uint8arrays": "^2.0.5"
