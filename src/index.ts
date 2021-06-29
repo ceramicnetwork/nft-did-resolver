@@ -76,8 +76,8 @@ async function assetToAccount(
 
 /**
  * Creates CAIP-10 links for each account to be used as controllers. 
- * Since there may be many owners for a given NFT (only ERC1155 for now), there can be many
- * controllers of that DID document.
+ * Since there may be many owners for a given NFT (only ERC1155 for now),
+ * there can be many controllers of that DID document.
  */
 async function accountsToDids(
   accounts: AccountID[], 
@@ -86,8 +86,11 @@ async function accountsToDids(
 ): Promise<string[] | undefined> {
   const controllers: string[] = [];
 
-  for (const accountId of accounts) {
-    const link = await Caip10Link.fromAccount(ceramic, accountId, { atTime: timestamp });
+  const links = await Promise.all(
+    accounts.map((accountId: AccountID) => Caip10Link.fromAccount(ceramic, accountId))
+  )
+  
+  for (const link of links) {
     if (link?.did) controllers.push(link.did);
   }
 

@@ -453,7 +453,7 @@ function expectBlockQueries(versionTime: string) {
 
 async function createCaip10Link(ethAuthProv: EthereumAuthProvider) {
   const accountId = await ethAuthProv.accountId()
-  const link = await Caip10Link.fromAccount((global as any).ceramic, accountId, {})
+  const link = await Caip10Link.fromAccount((global as any).ceramic, accountId, { syncTimeoutSeconds: 0 })
   await link.setDid(caipLinkControllerDid, ethAuthProv)
 }
 
