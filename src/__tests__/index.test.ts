@@ -38,10 +38,6 @@ enum ErcNamespace {
   ERC1155 = 'erc1155'
 }
 
-// since v1, tests require more time updated
-// to 12s timeout to prevent test timeouts
-jest.setTimeout(12000);
-
 describe('NFT DID Resolver (TheGraph)', () => {
   let config: NftResolverConfig;
   let nftResolver: ResolverRegistry;
