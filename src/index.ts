@@ -8,12 +8,13 @@ import type {
   VerificationMethod
 } from 'did-resolver';
 import type { CeramicApi } from '@ceramicnetwork/common';
+import { Caip10Link } from '@ceramicnetwork/stream-caip10-link';
 import { ChainID, AccountID } from 'caip';
-import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
 import { DIDDocumentMetadata } from 'did-resolver';
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils';
 
-const DID_LD_JSON = 'application/did+ld+json'
-const DID_JSON = 'application/did+json'
+const DID_LD_JSON = 'application/did+ld+json';
+const DID_JSON = 'application/did+json';
 
 
 // TODO - should be part of the caip library
@@ -73,28 +74,10 @@ async function assetToAccount(
   );
 }
 
-async function createCaip10Link(
-  account: AccountID, 
-  timestamp: number, 
-  ceramic: CeramicApi
-): Promise<string | null> {
-  const doc = await ceramic.createDocument('caip10-link', {
-    metadata: {
-      family: 'caip10-link',
-      controllers: [AccountID.format(account)]
-    }
-  });
-  if (timestamp) {
-    const docAtTime = await ceramic.loadDocument(doc.id, { atTime: timestamp });
-    return docAtTime?.content;
-  }
-  return doc?.content;
-}
-
 /**
  * Creates CAIP-10 links for each account to be used as controllers. 
- * Since there may be many owners for a given NFT (only ERC1155 for now), there can be many
- * controllers of that DID document.
+ * Since there may be many owners for a given NFT (only ERC1155 for now),
+ * there can be many controllers of that DID document.
  */
 async function accountsToDids(
   accounts: AccountID[], 
@@ -103,9 +86,12 @@ async function accountsToDids(
 ): Promise<string[] | undefined> {
   const controllers: string[] = [];
 
-  for (const account of accounts) {
-    const caip10Link = await createCaip10Link(account, timestamp, ceramic);
-    if (caip10Link) controllers.push(caip10Link);
+  const links = await Promise.all(
+    accounts.map((accountId: AccountID) => Caip10Link.fromAccount(ceramic, accountId))
+  )
+  
+  for (const link of links) {
+    if (link?.did) controllers.push(link.did);
   }
 
   return controllers.length > 0 ? controllers : undefined;
@@ -145,7 +131,7 @@ function getVersionTime(query = ''): number {
   return 0; // 0 is falsey
 }
 
-function validateResolverConfig(config: NftResovlerConfig) {
+function validateResolverConfig(config: NftResolverConfig) {
   if (!config?.ceramic) {
     throw new Error('Missing ceramic client in nft-did-resolver config');
   } else if (config.subGraphUrls) {
@@ -192,7 +178,7 @@ interface SubGraphUrls {
  *   }
  * }
  */
-export interface NftResovlerConfig {
+export interface NftResolverConfig {
   ceramic: CeramicApi;
   subGraphUrls?: SubGraphUrls;
 }
@@ -201,7 +187,7 @@ async function resolve(
   did: string,
   methodId: string,
   timestamp: number,
-  config: NftResovlerConfig
+  config: NftResolverConfig
 ): Promise<DIDResolutionResult> {
   const asset = idToAsset(methodId);
   // for 1155s, there can be many accounts that own a single asset
@@ -219,7 +205,7 @@ async function resolve(
 }
 
 export default {
-  getResolver: (config: NftResovlerConfig): ResolverRegistry => {
+  getResolver: (config: NftResolverConfig): ResolverRegistry => {
     validateResolverConfig(config);
     return {
       nft: async (

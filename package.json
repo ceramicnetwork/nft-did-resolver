@@ -9,13 +9,17 @@
     "Data"
   ],
   "author": "Joel Torstensson <oed3933@gmail.com>",
+  "contributors": [
+    "Mike Roth <mike@manyuses.com>"
+  ],
   "homepage": "",
   "repository": {
     "type": "git",
     "url": "git://github.com/ceramicnetwork/nft-did-resolver.git"
   },
   "license": "(Apache-2.0 OR MIT)",
-  "main": "lib/index.js",
+  "main": "lib/index",
+  "types": "lib/index",
   "directories": {
     "lib": "lib"
   },
@@ -32,7 +36,8 @@
     "chain": "./node_modules/.bin/ganache-cli --port 8546"
   },
   "dependencies": {
-    "@ceramicnetwork/common": "^0.17.0",
+    "@ceramicnetwork/common": "^1.0.7",
+    "@ceramicnetwork/stream-caip10-link": "^1.0.7",
     "cross-fetch": "^3.0.6",
     "json-to-graphql-query": "^2.0.0",
     "uint8arrays": "^2.0.5"
@@ -41,12 +46,12 @@
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.8.4",
     "@babel/preset-typescript": "^7.9.0",
-    "@ceramicnetwork/blockchain-utils-linking": "^0.3.0",
-    "@ceramicnetwork/core": "^0.21.0",
-    "@ceramicnetwork/http-client": "^0.10.1",
-    "@polkadot/util": "^5.9.2",
+    "@ceramicnetwork/blockchain-utils-linking": "^1.0.2",
+    "@polkadot/util": "^6.8.1",
+    "@types/create-hash": "^1.2.2",
     "@types/jest": "^26.0.22",
     "@types/node": "^13.13.15",
+    "@types/secp256k1": "^4.0.2",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
     "babel-jest": "^26.6.3",
@@ -57,8 +62,9 @@
     "ganache-cli": "^6.12.2",
     "ganache-core": "2.13.1",
     "jest": "^26.6.3",
-    "jest-environment-ceramic": "^0.11.1",
+    "jest-environment-ceramic": "^0.13.0",
     "jest-fetch-mock": "^3.0.3",
+    "lru_map": "^0.4.1",
     "typescript": "^4.2.3"
   },
   "jest": {

@@ -2,9 +2,10 @@
  * @jest-environment ceramic
  */
 
-import NftResolver, { NftResovlerConfig } from '../index';
+import NftResolver, { NftResolverConfig } from '../index';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking';
+import { Caip10Link } from '@ceramicnetwork/stream-caip10-link';
 import * as u8a from 'uint8arrays';
 import fetchMock from 'jest-fetch-mock';
 import { ethers } from 'ethers'
@@ -38,7 +39,7 @@ enum ErcNamespace {
 }
 
 describe('NFT DID Resolver (TheGraph)', () => {
-  let config: NftResovlerConfig;
+  let config: NftResolverConfig;
   let nftResolver: ResolverRegistry;
   let resolver: Resolver;
 
@@ -48,7 +49,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
   beforeAll(async () => {
     config = {
-      ceramic: ceramic
+      ceramic: (global as any).ceramic
     };
 
     nftResolver = NftResolver.getResolver(config);
@@ -61,7 +62,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     ethAccount = (await ethSigner.getAddress()).toLowerCase()
 
     ethAuthProv = createEthAuthProvider(ethSigner, ethAccount);
-    await createCaip10Link(ethAuthProv, config.ceramic);
+    await createCaip10Link(ethAuthProv);
   });
 
   it('getResolver works correctly', () => {
@@ -72,57 +73,57 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     it('does not throw with valid customSubgraphs', () => {
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc721: ERC721_QUERY_URL,
             erc1155: ERC1155_QUERY_URL,
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       expect(() => NftResolver.getResolver(customConfig))
         .not.toThrow();
     });
 
-    it('throws when erc721 subGraphUrls is not a url', () => {
+    it('throws when erc721 subGraphUrl is not a url', () => {
       const badUrl = 'aoeuaoeu';
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc721: badUrl
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       expect(() => NftResolver.getResolver(customConfig))
-        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL: ${badUrl}`);
+        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL`);
     });
   
-    it('throws when erc1155 subGraphUrls is not a url', () => {
+    it('throws when erc1155 subGraphUrl is not a url', () => {
       const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc1155: badUrl
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
       expect(() => NftResolver.getResolver(customConfig))
-        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL: ${badUrl}`);
+        .toThrowError(`Invalid config for nft-did-resolver: Invalid URL`);
     });
 
     it('throws when the caip2 chainId is malformed', () => {
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155.1': {
             erc1155: ERC1155_QUERY_URL
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
       expect(() => NftResolver.getResolver(customConfig))
         .toThrowError('Invalid config for nft-did-resolver: Invalid chainId provided: eip155.1');
     });
@@ -232,13 +233,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(custom721Subgraph, JSON.stringify(erc721OwnerResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc721: custom721Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -258,13 +259,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(cosmos721Subgraph, JSON.stringify(erc721OwnerResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'cosmos:iov-nftnet': {
             erc721: cosmos721Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -315,7 +316,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         .setCaip10Controller(caipLinkControllerDid)
         .build();
 
-      await expectVectorResult(resolver, nftVector);
+        await expectVectorResult(resolver, nftVector);
     });
 
     it('resolves an erc1155 nft doc with an older timestamp', async () => {
@@ -372,13 +373,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'eip155:1': {
             erc1155: custom1155Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
   
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -398,13 +399,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse));
 
       const customConfig = {
-        ceramic: ceramic,
+        ceramic: (global as any).ceramic,
         subGraphUrls: {
           'cosmos:iov-mainnet': {
             erc1155: custom1155Subgraph
           }
         }
-      } as NftResovlerConfig;
+      } as NftResolverConfig;
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig));
 
@@ -420,8 +421,8 @@ describe('NFT DID Resolver (TheGraph)', () => {
 });
 
 const expectVectorResult = async (resolver: Resolver, nftVector: NftDidVector) => {
-  expect(await resolver.resolve(nftVector.nftDid))
-    .toEqual(nftVector.getResult());
+  const result = await resolver.resolve(nftVector.nftDid);
+  expect(result).toEqual(nftVector.getResult());
 }
 
 // a helper to do the same operation as in the resolver
@@ -447,11 +448,9 @@ function expectBlockQueries(versionTime: string) {
 }
 
 async function createCaip10Link(ethAuthProv: EthereumAuthProvider) {
-  const proof = await ethAuthProv.createLink(caipLinkControllerDid);
-  const doc = await ceramic.createDocument('caip10-link', {
-    metadata: { family: 'caip10-link', controllers: [proof.account] }
-  });
-  await doc.change({ content: proof });
+  const accountId = await ethAuthProv.accountId()
+  const link = await Caip10Link.fromAccount((global as any).ceramic, accountId, { syncTimeoutSeconds: 0 })
+  await link.setDid(caipLinkControllerDid, ethAuthProv)
 }
 
 function createEthAuthProvider(ethSigner: ethers.providers.JsonRpcSigner, ethAccount: string) {

@@ -24,13 +24,13 @@ $ yarn add nft-did-resolver
 ### Usage
 
 ```js
-import NftResolver, { NftResovlerConfig } from 'nft-did-resolver'
+import NftResolver, { NftResolverConfig } from 'nft-did-resolver'
 import { Resolver } from 'did-resolver'
 import Ceramic from '@ceramicnetwork/http-client'
 
 const ceramic = new Ceramic() // connects to localhost:7007 by default
 
-const config: NftResovlerConfig = {
+const config: NftResolverConfig = {
   ceramic,
   subGraphUrls: { // optional, there are defaults for ethereum mainnet (erc721 and erc1155)
     // CAIP2 ChainID (below is ETH mainnet)
