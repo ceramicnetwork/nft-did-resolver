@@ -32,26 +32,22 @@
     "prepublishOnly": "npm run build",
     "prebuild": "npm run clean",
     "lint": "./node_modules/.bin/eslint ./src --ext .js,.jsx,.ts,.tsx",
-    "clean": "rm -rf ./lib",
-    "chain": "./node_modules/.bin/ganache-cli --port 8546"
+    "clean": "rm -rf ./lib"
   },
   "dependencies": {
-    "@ceramicnetwork/common": "^1.0.7",
+    "@ceramicnetwork/common": "^1.1.0",
     "@ceramicnetwork/stream-caip10-link": "^1.0.7",
-    "cross-fetch": "^3.0.6",
-    "json-to-graphql-query": "^2.0.0",
-    "uint8arrays": "^2.0.5"
+    "cross-fetch": "^3.1.4",
+    "json-to-graphql-query": "^2.1.0",
+    "uint8arrays": "^2.1.8"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.8.4",
     "@babel/preset-typescript": "^7.9.0",
     "@ceramicnetwork/blockchain-utils-linking": "^1.0.2",
-    "@polkadot/util": "^6.8.1",
-    "@types/create-hash": "^1.2.2",
     "@types/jest": "^26.0.22",
     "@types/node": "^13.13.15",
-    "@types/secp256k1": "^4.0.2",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
     "babel-jest": "^26.6.3",
@@ -60,7 +56,6 @@
     "eslint-config-3box": "^0.2.0",
     "eslint-plugin-jest": "^23.8.2",
     "ethers": "^5.0.32",
-    "ganache-cli": "^6.12.2",
     "ganache-core": "^2.13.1",
     "jest": "^26.6.3",
     "jest-environment-ceramic": "^0.13.0",
