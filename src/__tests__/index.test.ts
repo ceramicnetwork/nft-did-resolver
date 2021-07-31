@@ -10,6 +10,7 @@ import * as u8a from 'uint8arrays';
 import fetchMock from 'jest-fetch-mock';
 import { ethers } from 'ethers'
 import { NftDidVectorBuilder, NftDidVector } from '../testUtils/NftDidVector';
+import ganache from 'ganache-core'
 
 const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph';
 const ERC1155_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph';
@@ -32,6 +33,10 @@ const blockQueryNumber = '1234567';
 const blockQueryResponse = { data: { blocks: [ { number: blockQueryNumber } ] } };
 
 const caipLinkControllerDid = 'did:3:testing';
+
+const GANACHE_CONF = {
+  seed: '0xd30553e27ba2954e3736dae1342f5495798d4f54012787172048582566938f6f',
+}
 
 enum ErcNamespace {
   ERC721 = 'erc721',
@@ -57,7 +62,8 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     
     // Set up the EthAuthProvider
-    const ethRpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8546')
+    const ethRpcProvider = new ethers.providers.Web3Provider(ganache.provider(GANACHE_CONF))
+    // const ethRpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8546')
     const ethSigner = ethRpcProvider.getSigner(1);
     ethAccount = (await ethSigner.getAddress()).toLowerCase()
 
