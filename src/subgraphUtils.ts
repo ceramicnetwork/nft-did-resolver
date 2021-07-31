@@ -8,7 +8,7 @@ const ERC721_QUERY_URL = `${GRAPH_API_PREFIX}/wighawag/eip721-subgraph`;
 const ERC1155_QUERY_URL = `${GRAPH_API_PREFIX}/amxx/eip1155-subgraph`;
 
 
-export const fetchQueryData = async (queryUrl: string, query: any): Promise<any> => {
+export const fetchQueryData = async (queryUrl: string, query: unknown): Promise<any> => {
   const fetchOpts = {
     method: 'POST',
     headers: {
@@ -38,7 +38,7 @@ type BlockQueryResponse = {
 
 /**
  * Queries TheGraph to find the latest block at the given time.
- * @param timestamp 
+ * @param timestamp
  * @returns {string} latest block num at timestamp
  */
 export const blockAtTime = async (timestamp: number): Promise<number> => {
@@ -46,7 +46,7 @@ export const blockAtTime = async (timestamp: number): Promise<number> => {
     blocks: {
       __args: {
         first: 1,
-        orderBy: 'timestamp', 
+        orderBy: 'timestamp',
         orderDirection: 'desc',
         where: {
           // we ask for lte because it is the last known block at the given time
@@ -68,7 +68,7 @@ export const blockAtTime = async (timestamp: number): Promise<number> => {
   return parseInt(queryData.blocks[0].number);
 }
 /**
- * Eth blocks are typically 13 seconds. We use this check so we don't have to 
+ * Eth blocks are typically 13 seconds. We use this check so we don't have to
  * make an unneccessary call to the blocks subgraph if the did was just created.
  */
 export const isWithinLastBlock = (timestamp: number): boolean => {
@@ -84,15 +84,15 @@ type ERC721DataResponse = {
 }
 
 export const erc721OwnerOf = async (
-  asset: AssetID, 
-  blockNum: number, 
+  asset: AssetID,
+  blockNum: number,
   customSubgraph?: string
 ): Promise<string> => {
   const query = {
     tokens: {
       __args: {
         where: {
-          // contract: asset.reference, // not necessary 
+          // contract: asset.reference, // not necessary
           id: [asset.reference, asset.tokenId].join('_')
         },
         first: 1,
@@ -128,8 +128,8 @@ type ERC1155DataResponse = {
 }
 
 export const erc1155OwnersOf = async (
-  asset: AssetID, 
-  blockNum: number, 
+  asset: AssetID,
+  blockNum: number,
   customSubgraph?: string
 ): Promise<string[]> => {
   const query = {
