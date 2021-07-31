@@ -25,9 +25,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Run local ganache chain in the background
-        run: (npm run chain&)
-
       - name: Test
         run: npm t
 
