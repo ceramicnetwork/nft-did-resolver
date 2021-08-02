@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { DIDResolutionResult, VerificationMethod } from 'did-resolver'
+
 export class NftDidVector {
   nftDid: string
   nftOwners: string[] | undefined
@@ -49,10 +49,8 @@ export class NftDidVector {
       didResolutionMetadata: { contentType: 'application/did+json' },
     } as DIDResolutionResult
 
-    // @ts-ignore: Object is possibly 'null'
     if (this.verificationMethods)
       resolutionResult.didDocument.verificationMethod = [...this.verificationMethods]
-    // @ts-ignore: Object is possibly 'null'
     if (this.caip10Controller) resolutionResult.didDocument.controller = this.caip10Controller
     return resolutionResult
   }
