@@ -91,7 +91,7 @@ export const erc721OwnerOf = async (
       __args: {
         where: {
           // contract: asset.reference, // not necessary
-          id: [asset.reference, asset.tokenId].join('_'),
+          id: [asset.reference, asset.tokenId].join('-'),
         },
         first: 1,
         block: blockNum ? { number: blockNum } : null,
