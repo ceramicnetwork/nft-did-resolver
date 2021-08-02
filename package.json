@@ -12,14 +12,14 @@
   "contributors": [
     "Mike Roth <mike@manyuses.com>"
   ],
-  "homepage": "",
+  "homepage": "https://github.com/ceramicnetwork/nft-did-resolver",
   "repository": {
     "type": "git",
     "url": "git://github.com/ceramicnetwork/nft-did-resolver.git"
   },
   "license": "(Apache-2.0 OR MIT)",
-  "main": "lib/index",
-  "types": "lib/index",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "directories": {
     "lib": "lib"
   },
