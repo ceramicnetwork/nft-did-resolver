@@ -201,7 +201,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     it('throws on invalid ERC721 contract', async () => {
       fetchMock.once(JSON.stringify(erc721NoResponse))
       const invalidContract = '0x1234567891234567891234567891234596351156'
-      const tokenId = '1'
+      const tokenId = '0x1'
 
       const nftVector = nftVectorBuilder
         .setNftContract(invalidContract)
@@ -211,12 +211,13 @@ describe('NFT DID Resolver (TheGraph)', () => {
         )
         .build()
 
+      console.log('nft-v', nftVector)
       await expectVectorResult(resolver, nftVector)
     })
 
     it('throws on non-existent ERC721 token with valid contract', async () => {
       fetchMock.once(JSON.stringify(erc721NoResponse))
-      const tokenId = '12345678910'
+      const tokenId = '0x2dfdc1c3e'
 
       const nftVector = nftVectorBuilder
         .setNftContract(erc721Contract)
@@ -360,7 +361,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     it('throws on invalid ERC1155 contract', async () => {
       fetchMock.once(JSON.stringify(erc1155NoResponse))
       const invalidContract = '0x9876543219876543219876543219876543219876'
-      const tokenId = '1'
+      const tokenId = '0x1'
 
       const nftVector = nftVectorBuilder
         .setNftContract(invalidContract)
@@ -375,7 +376,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     it('throws on non-existent ERC1155 token with valid contract', async () => {
       fetchMock.once(JSON.stringify(erc1155NoResponse))
-      const badTokenId = '12345678910'
+      const badTokenId = '0x2dfdc1c3e'
 
       const nftVector = nftVectorBuilder
         .setNftContract(erc1155Contract)

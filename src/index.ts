@@ -35,11 +35,13 @@ function idToAsset(id: string): AssetID {
     throw new Error(`Invalid asset id: ${id}`)
   }
 
+  const hexTokenId = tokenId.startsWith('0x') ? tokenId : `0x${Number(tokenId).toString(16)}`
+
   return {
     chainId: new ChainID(ChainID.parse(chainid.replace('.', ':'))),
     namespace,
     reference,
-    tokenId,
+    tokenId: hexTokenId,
   }
 }
 
