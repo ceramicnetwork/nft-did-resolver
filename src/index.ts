@@ -228,8 +228,6 @@ export default {
           const didResult = await resolve(did, parsed.id, timestamp, config)
 
           if (contentType === DID_LD_JSON) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore: Object is possibly 'null'
             didResult.didDocument['@context'] = 'https://w3id.org/did/v1'
             didResult.didResolutionMetadata.contentType = DID_LD_JSON
           } else if (contentType !== DID_JSON) {
