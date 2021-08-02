@@ -9,7 +9,7 @@ import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
 import * as u8a from 'uint8arrays'
 import fetchMock from 'jest-fetch-mock'
 import { ethers } from 'ethers'
-import { NftDidVectorBuilder, NftDidVector } from '../testUtils/NftDidVector'
+import { NftDidVectorBuilder, NftDidVector } from './nft-did-vector'
 import ganache from 'ganache-core'
 
 const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph'
