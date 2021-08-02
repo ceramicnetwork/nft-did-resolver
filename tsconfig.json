@@ -13,11 +13,12 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "noUnusedLocals": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    "importHelpers": true
   },
   "include": ["./src/**/*"],
   "exclude": [
     "node_modules",
-    "**/*.test.ts",
-  ],
+    "**/*.test.ts"
+  ]
 }
