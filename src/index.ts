@@ -27,7 +27,13 @@ export interface AssetID {
 function idToAsset(id: string): AssetID {
   // TODO use caip package to do this once it supports assetIds
   const [chainid, assetType, tokenId] = id.split('_')
+  if (!(chainid && assetType && tokenId)) {
+    throw new Error(`Invalid asset id: ${id}`)
+  }
   const [namespace, reference] = assetType.split('.')
+  if (!(namespace && reference)) {
+    throw new Error(`Invalid asset id: ${id}`)
+  }
 
   return {
     chainId: new ChainID(ChainID.parse(chainid.replace('.', ':'))),
