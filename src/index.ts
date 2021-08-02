@@ -11,7 +11,7 @@ import type { CeramicApi } from '@ceramicnetwork/common'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
 import { ChainID, AccountID } from 'caip'
 import { DIDDocumentMetadata } from 'did-resolver'
-import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraphUtils'
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraph-utils'
 
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
@@ -27,13 +27,21 @@ export interface AssetID {
 function idToAsset(id: string): AssetID {
   // TODO use caip package to do this once it supports assetIds
   const [chainid, assetType, tokenId] = id.split('_')
+  if (!(chainid && assetType && tokenId)) {
+    throw new Error(`Invalid asset id: ${id}`)
+  }
   const [namespace, reference] = assetType.split('.')
+  if (!(namespace && reference)) {
+    throw new Error(`Invalid asset id: ${id}`)
+  }
+
+  const hexTokenId = tokenId.startsWith('0x') ? tokenId : `0x${Number(tokenId).toString(16)}`
 
   return {
     chainId: new ChainID(ChainID.parse(chainid.replace('.', ':'))),
     namespace,
     reference,
-    tokenId,
+    tokenId: hexTokenId,
   }
 }
 
@@ -222,8 +230,6 @@ export default {
           const didResult = await resolve(did, parsed.id, timestamp, config)
 
           if (contentType === DID_LD_JSON) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore: Object is possibly 'null'
             didResult.didDocument['@context'] = 'https://w3id.org/did/v1'
             didResult.didResolutionMetadata.contentType = DID_LD_JSON
           } else if (contentType !== DID_JSON) {

@@ -70,8 +70,8 @@
     "setupFiles": [
       "./jest.setup.ts"
     ],
-    "transformIgnorePatterns": [
-      "/node_modules(?!/did-jwt)/"
+    "testMatch": [
+      "**/?(*.)+(spec|test).[jt]s?(x)"
     ]
   },
   "prettier": "eslint-config-3box/prettier.config"
