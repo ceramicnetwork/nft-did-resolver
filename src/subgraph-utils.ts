@@ -4,7 +4,7 @@ import { AssetID } from '.'
 
 const GRAPH_API_PREFIX = 'https://api.thegraph.com/subgraphs/name'
 const BLOCK_QUERY_URL = `${GRAPH_API_PREFIX}/yyong1010/ethereumblocks`
-const ERC721_QUERY_URL = `${GRAPH_API_PREFIX}/wighawag/eip721-subgraph`
+const ERC721_QUERY_URL = `${GRAPH_API_PREFIX}/touchain/erc721track`
 const ERC1155_QUERY_URL = `${GRAPH_API_PREFIX}/amxx/eip1155-subgraph`
 
 export const fetchQueryData = async (queryUrl: string, query: unknown): Promise<any> => {

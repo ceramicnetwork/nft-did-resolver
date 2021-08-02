@@ -12,7 +12,7 @@ import { ethers } from 'ethers'
 import { NftDidVectorBuilder, NftDidVector } from './nft-did-vector'
 import ganache from 'ganache-core'
 
-const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph'
+const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/touchain/erc721track'
 const ERC1155_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph'
 const BLOCK_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks'
 
