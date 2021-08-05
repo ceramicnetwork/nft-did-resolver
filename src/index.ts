@@ -111,7 +111,7 @@ function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]
   // Each of the owning accounts is a verification method (at the point in time)
   const verificationMethods = accounts.slice().map((account) => {
     return {
-      id: `${did}#owner`,
+      id: `${did}#${account.address}`,
       type: 'BlockchainVerificationMethod2021',
       controller: did,
       blockchainAccountId: account.toString(),
