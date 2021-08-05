@@ -150,7 +150,7 @@ export class NftDidVectorBuilder {
 
     return this.nftOwners.slice().map((owner) => {
       return {
-        id: `${this.nftDid}#owner`,
+        id: `${this.nftDid}#${owner}`,
         type: 'BlockchainVerificationMethod2021',
         controller: this.nftDid,
         blockchainAccountId: `${owner}@${this.caip2ChainId}`,
