@@ -60,7 +60,16 @@ describe('NFT DID Resolver (TheGraph)', () => {
   beforeAll(async () => {
     config = {
       ceramic: (global as any).ceramic,
-      chains: {},
+      chains: {
+        'eip155:1': {
+          blocks: BLOCK_QUERY_URL,
+          skew: 15000,
+          assets: {
+            erc721: ERC721_QUERY_URL,
+            erc1155: ERC1155_QUERY_URL,
+          },
+        },
+      },
     }
 
     nftResolver = NftResolver.getResolver(config)
