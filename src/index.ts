@@ -58,7 +58,7 @@ async function assetToAccount(
 
   // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
   let queryBlock = 0
-  if (timestamp && !isWithinLastBlock(timestamp)) {
+  if (timestamp && !isWithinLastBlock(timestamp, chain.skew)) {
     queryBlock = await blockAtTime(timestamp, chain.blocks)
   }
 

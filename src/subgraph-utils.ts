@@ -65,8 +65,8 @@ export const blockAtTime = async (timestamp: number, blockQueryUrl: string): Pro
  * Eth blocks are typically 13 seconds. We use this check so we don't have to
  * make an unneccessary call to the blocks subgraph if the did was just created.
  */
-export const isWithinLastBlock = (timestamp: number): boolean => {
-  return Date.now() - timestamp <= 10 * 1000
+export const isWithinLastBlock = (timestamp: number, skew: number): boolean => {
+  return Date.now() - timestamp <= skew
 }
 
 type ERC721DataResponse = {
