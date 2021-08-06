@@ -8,22 +8,18 @@
 
 This implementation is still a prototype. Contributions are welcome!
 
-By default, this package will resolve dids for both ERC721 and ERC1155 tokens on mainnet, if they are indexed by their respective public subgraphs: 
-* [EIP721-Subgraph](https://api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph)
-* [EIP1155-Subgraph](https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph)
-
-To resolve DIDs using your own subgraph, see [Custom Subgraphs](#custom-subgraphs)
+To use a package, you would need to provide three subgraph endpoints for every network you are going to use:
+one for blocks, one for ERC721 tokens, another for ERC1155 tokens. You would also need to provide a `skew` that
+is a time (in milliseconds) within which a latest block is considered valid. Usually it is a typical block time. 
 
 ### Installation
 ```
 $ npm install nft-did-resolver
-// or
-$ yarn add nft-did-resolver
 ```
 
 ### Usage
 
-```js
+```typescript
 import NftResolver, { NftResolverConfig } from 'nft-did-resolver'
 import { Resolver } from 'did-resolver'
 import Ceramic from '@ceramicnetwork/http-client'
@@ -32,19 +28,24 @@ const ceramic = new Ceramic() // connects to localhost:7007 by default
 
 const config: NftResolverConfig = {
   ceramic,
-  subGraphUrls: { // optional, there are defaults for ethereum mainnet (erc721 and erc1155)
-    // CAIP2 ChainID (below is ETH mainnet)
+  chains: {
     'eip155:1': {
-      // Asset namespace
-      erc721: 'https://api.thegraph.com/subgraphs/name/xxx/yyy',
-      // erc721: 'http://localhost:8000/subgraphs/name/aoeu/qjkx' // also works!
-      erc1155: 'https://api.thegraph.com/subgraphs/name/abc/xyz'
+      blocks: "https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks",
+      skew: 15000,
+      assets: {
+        erc721: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc721-subgraph",
+        erc1155: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc1155-subgraph",
+      },
     },
-    // Fake cosmos example
-    'cosmos:nft-token-chainid': {
-      erc721: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
-    }
-  }
+    'eip155:4': {
+      blocks: "https://api.thegraph.com/subgraphs/name/mul53/rinkeby-blocks",
+      skew: 15000,
+      assets: {
+        erc721: "https://api.thegraph.com/subgraphs/name/sunguru98/erc721-rinkeby-subgraph",
+        erc1155: "https://api.thegraph.com/subgraphs/name/sunguru98/erc1155-rinkeby-subgraph",
+      },
+    },
+  },
 }
 
 // getResolver will return an object with a key/value pair of { 'nft': resolver }
@@ -57,14 +58,9 @@ const erc1155result = await didResolver.resolve('did:nft:eip155.1_erc1155.0x06eb
 console.log(erc721result, erc1155result)
 ```
 
-## Development
-Start a ceramic daemon using the `@ceramicnetwork/cli` package, and a ganache ethereum rpc using the `ganacle-cli` package.
-
-
-Then run tests:
+## Testing
 ```
 $ npm test
-$ yarn test
 ```
 
 ## Custom Subgraphs
