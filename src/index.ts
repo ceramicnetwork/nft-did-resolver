@@ -47,18 +47,22 @@ function idToAsset(id: string): AssetID {
 
 async function assetToAccount(
   asset: AssetID,
-  timestamp: number,
-  chains: Record<string, ChainConfig>
+  timestamp: number | undefined,
+  chains: Record<string, ChainConfig | undefined>
 ): Promise<AccountID[]> {
+  const assetChainId = asset.chainId.toString()
+  const chain = chains[assetChainId]
+  if (!chain) {
+    throw new Error(`No chain configuration for ${assetChainId}`)
+  }
+
   // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
   let queryBlock = 0
   if (timestamp && !isWithinLastBlock(timestamp)) {
-    queryBlock = await blockAtTime(timestamp)
+    queryBlock = await blockAtTime(timestamp, chain.blocks)
   }
 
   let owners: string[]
-
-  const assetChainId = asset.chainId.toString()
   let ercSubgraphUrls = undefined
 
   if (chains && chains[assetChainId]) {
