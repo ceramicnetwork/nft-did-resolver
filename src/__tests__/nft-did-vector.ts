@@ -81,7 +81,7 @@ export class NftDidVectorBuilder {
   }
 
   setNftId(nftId: string): NftDidVectorBuilder {
-    this.nftId = nftId
+    this.nftId = nftId.startsWith('0x') ? nftId : `0x${Number(nftId).toString(16)}`
     return this
   }
 

@@ -9,44 +9,24 @@ import type {
 } from 'did-resolver'
 import type { CeramicApi } from '@ceramicnetwork/common'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
-import { ChainId, AccountId } from 'caip'
+import { ChainId, AccountId, AssetId } from 'caip'
 import { DIDDocumentMetadata } from 'did-resolver'
 import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraph-utils'
 
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
 
-// TODO - should be part of the caip library
-export interface AssetID {
-  chainId: ChainId
-  namespace: string
-  reference: string
-  tokenId: string
-}
-
-function idToAsset(id: string): AssetID {
-  // TODO use caip package to do this once it supports assetIds
-  const [chainid, assetType, tokenId] = id.split('_')
-  if (!(chainid && assetType && tokenId)) {
-    throw new Error(`Invalid asset id: ${id}`)
-  }
-  const [namespace, reference] = assetType.split('.')
-  if (!(namespace && reference)) {
-    throw new Error(`Invalid asset id: ${id}`)
-  }
-
-  const hexTokenId = tokenId.startsWith('0x') ? tokenId : `0x${Number(tokenId).toString(16)}`
-
-  return {
-    chainId: new ChainId(ChainId.parse(chainid.replace('.', ':'))),
-    namespace,
-    reference,
-    tokenId: hexTokenId,
-  }
+function idToAsset(id: string): AssetId {
+  const caip = id.replace(/_/g, '/').replace(/\./g, ':')
+  const parsed = AssetId.parse(caip)
+  parsed.tokenId = parsed.tokenId.startsWith('0x')
+    ? parsed.tokenId
+    : `0x${Number(parsed.tokenId).toString(16)}`
+  return new AssetId(AssetId.parse(caip))
 }
 
 async function assetToAccount(
-  asset: AssetID,
+  asset: AssetId,
   timestamp: number | undefined,
   chains: Record<string, ChainConfig | undefined>
 ): Promise<AccountId[]> {
@@ -69,13 +49,13 @@ async function assetToAccount(
     ercSubgraphUrls = chains[assetChainId].assets
   }
 
-  if (asset.namespace === 'erc721') {
+  if (asset.assetName.namespace === 'erc721') {
     owners = [await erc721OwnerOf(asset, queryBlock, ercSubgraphUrls?.erc721)]
-  } else if (asset.namespace === 'erc1155') {
+  } else if (asset.assetName.namespace === 'erc1155') {
     owners = await erc1155OwnersOf(asset, queryBlock, ercSubgraphUrls?.erc1155)
   } else {
     throw new Error(
-      `Only erc721 and erc1155 namespaces are currently supported. Given: ${asset.namespace}`
+      `Only erc721 and erc1155 namespaces are currently supported. Given: ${asset.assetName.namespace}`
     )
   }
 
