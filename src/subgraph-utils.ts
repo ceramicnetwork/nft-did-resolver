@@ -1,6 +1,6 @@
 import fetch from 'cross-fetch'
 import { jsonToGraphQLQuery } from 'json-to-graphql-query'
-import { AssetID } from '.'
+import { AssetID } from './index'
 
 export const fetchQueryData = async (queryUrl: string, query: unknown): Promise<any> => {
   const fetchOpts = {

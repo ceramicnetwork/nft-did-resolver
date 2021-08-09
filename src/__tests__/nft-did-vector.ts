@@ -29,16 +29,14 @@ export class NftDidVector {
 
   getResult(): DIDResolutionResult {
     if (this.errorMessage) {
-      const resolutionResult = {
+      return {
         didDocument: null,
         didDocumentMetadata: {},
         didResolutionMetadata: {
           error: 'invalidDid',
           message: this.errorMessage,
         },
-      } as DIDResolutionResult
-
-      return resolutionResult
+      }
     }
 
     const resolutionResult = {
@@ -153,7 +151,7 @@ export class NftDidVectorBuilder {
         id: `${this.nftDid}#${owner}`,
         type: 'BlockchainVerificationMethod2021',
         controller: this.nftDid,
-        blockchainAccountId: `${owner}@${this.caip2ChainId}`,
+        blockchainAccountId: `${this.caip2ChainId}:${owner}`,
       } as VerificationMethod
     })
   }

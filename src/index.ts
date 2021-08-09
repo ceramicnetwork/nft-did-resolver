@@ -9,7 +9,7 @@ import type {
 } from 'did-resolver'
 import type { CeramicApi } from '@ceramicnetwork/common'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
-import { ChainID, AccountID } from 'caip'
+import { ChainId, AccountId } from 'caip'
 import { DIDDocumentMetadata } from 'did-resolver'
 import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraph-utils'
 
@@ -18,7 +18,7 @@ const DID_JSON = 'application/did+json'
 
 // TODO - should be part of the caip library
 export interface AssetID {
-  chainId: ChainID
+  chainId: ChainId
   namespace: string
   reference: string
   tokenId: string
@@ -38,7 +38,7 @@ function idToAsset(id: string): AssetID {
   const hexTokenId = tokenId.startsWith('0x') ? tokenId : `0x${Number(tokenId).toString(16)}`
 
   return {
-    chainId: new ChainID(ChainID.parse(chainid.replace('.', ':'))),
+    chainId: new ChainId(ChainId.parse(chainid.replace('.', ':'))),
     namespace,
     reference,
     tokenId: hexTokenId,
@@ -49,7 +49,7 @@ async function assetToAccount(
   asset: AssetID,
   timestamp: number | undefined,
   chains: Record<string, ChainConfig | undefined>
-): Promise<AccountID[]> {
+): Promise<AccountId[]> {
   const assetChainId = asset.chainId.toString()
   const chain = chains[assetChainId]
   if (!chain) {
@@ -81,7 +81,7 @@ async function assetToAccount(
 
   return owners.slice().map(
     (owner) =>
-      new AccountID({
+      new AccountId({
         chainId: asset.chainId,
         address: owner,
       })
@@ -94,14 +94,14 @@ async function assetToAccount(
  * there can be many controllers of that DID document.
  */
 async function accountsToDids(
-  accounts: AccountID[],
+  accounts: AccountId[],
   timestamp: number,
   ceramic: CeramicApi
 ): Promise<string[] | undefined> {
   const controllers: string[] = []
 
   const links = await Promise.all(
-    accounts.map((accountId: AccountID) => Caip10Link.fromAccount(ceramic, accountId))
+    accounts.map((accountId: AccountId) => Caip10Link.fromAccount(ceramic, accountId))
   )
 
   for (const link of links) {
@@ -111,7 +111,7 @@ async function accountsToDids(
   return controllers.length > 0 ? controllers : undefined
 }
 
-function wrapDocument(did: string, accounts: AccountID[], controllers?: string[]): DIDDocument {
+function wrapDocument(did: string, accounts: AccountId[], controllers?: string[]): DIDDocument {
   // Each of the owning accounts is a verification method (at the point in time)
   const verificationMethods = accounts.slice().map((account) => {
     return {
@@ -158,7 +158,7 @@ function validateResolverConfig(config: NftResolverConfig) {
   }
   try {
     Object.entries(config.chains).forEach(([chainId, chainConfig]) => {
-      ChainID.parse(chainId)
+      ChainId.parse(chainId)
       new URL(chainConfig.blocks)
       Object.values(chainConfig.assets).forEach((subgraph) => {
         new URL(subgraph)
