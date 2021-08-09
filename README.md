@@ -29,12 +29,10 @@ const ceramic = new Ceramic() // connects to localhost:7007 by default
 const config: NftResolverConfig = {
   ceramic,
   chains: {
-    // Each key is [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) identifier.
     'eip155:1': {
       blocks: "https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks",
       skew: 15000,
       assets: {
-        // Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
         erc721: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc721-subgraph",
         erc1155: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc1155-subgraph",
       },
@@ -59,6 +57,10 @@ const erc721result = await didResolver.resolve('did:nft:eip155.1_erc721.0xb300a4
 const erc1155result = await didResolver.resolve('did:nft:eip155.1_erc1155.0x06eb48572a2ef9a3b230d69ca731330793b65bdc_1')
 console.log(erc721result, erc1155result)
 ```
+
+`chains` field in config has [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) as keys.
+Each such `chain` is expected to contain endpoints to ERC721 and/or ERC1155 subgraphs under `assets` field.
+Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
 
 ## Testing
 ```
