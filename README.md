@@ -58,7 +58,7 @@ const erc1155result = await didResolver.resolve('did:nft:eip155.1_erc1155.0x06eb
 console.log(erc721result, erc1155result)
 ```
 
-`chains` field in config has [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) as keys.
+`chains` field in config has [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain identifiers as keys.
 Each such `chain` is expected to contain endpoints to ERC721 and/or ERC1155 subgraphs under `assets` field.
 Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
 
