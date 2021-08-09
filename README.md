@@ -29,10 +29,12 @@ const ceramic = new Ceramic() // connects to localhost:7007 by default
 const config: NftResolverConfig = {
   ceramic,
   chains: {
+    // Each key is [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) identifier.
     'eip155:1': {
       blocks: "https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks",
       skew: 15000,
       assets: {
+        // Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
         erc721: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc721-subgraph",
         erc1155: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc1155-subgraph",
       },
