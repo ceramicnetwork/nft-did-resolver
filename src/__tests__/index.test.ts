@@ -60,6 +60,16 @@ describe('NFT DID Resolver (TheGraph)', () => {
   beforeAll(async () => {
     config = {
       ceramic: (global as any).ceramic,
+      chains: {
+        'eip155:1': {
+          blocks: BLOCK_QUERY_URL,
+          skew: 15000,
+          assets: {
+            erc721: ERC721_QUERY_URL,
+            erc1155: ERC1155_QUERY_URL,
+          },
+        },
+      },
     }
 
     nftResolver = NftResolver.getResolver(config)
@@ -81,29 +91,37 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
   describe('nft-did-resolver config', () => {
     it('does not throw with valid customSubgraphs', () => {
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'eip155:1': {
-            erc721: ERC721_QUERY_URL,
-            erc1155: ERC1155_QUERY_URL,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc721: ERC721_QUERY_URL,
+              erc1155: ERC1155_QUERY_URL,
+            },
           },
         },
-      } as NftResolverConfig
+      }
 
       expect(() => NftResolver.getResolver(customConfig)).not.toThrow()
     })
 
     it('throws when erc721 subGraphUrl is not a url', () => {
       const badUrl = 'aoeuaoeu'
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'eip155:1': {
-            erc721: badUrl,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc721: badUrl,
+            },
           },
         },
-      } as NftResolverConfig
+      }
 
       expect(() => NftResolver.getResolver(customConfig)).toThrowError(
         `Invalid config for nft-did-resolver: Invalid URL`
@@ -112,28 +130,36 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     it('throws when erc1155 subGraphUrl is not a url', () => {
       const badUrl = 'http: //api.thegraph.com/subgraphs/name/wighawag/eip721-subgraph'
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'eip155:1': {
-            erc1155: badUrl,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc1155: badUrl,
+            },
           },
         },
-      } as NftResolverConfig
+      }
       expect(() => NftResolver.getResolver(customConfig)).toThrowError(
         `Invalid config for nft-did-resolver: Invalid URL`
       )
     })
 
     it('throws when the caip2 chainId is malformed', () => {
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'eip155.1': {
-            erc1155: ERC1155_QUERY_URL,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc1155: ERC1155_QUERY_URL,
+            },
           },
         },
-      } as NftResolverConfig
+      }
       expect(() => NftResolver.getResolver(customConfig)).toThrowError(
         'Invalid config for nft-did-resolver: Invalid chainId provided: eip155.1'
       )
@@ -250,14 +276,18 @@ describe('NFT DID Resolver (TheGraph)', () => {
       fetchMock.mockIf(custom721Subgraph)
       fetchMock.mockOnceIf(custom721Subgraph, JSON.stringify(erc721OwnerResponse))
 
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'eip155:1': {
-            erc721: custom721Subgraph,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc721: custom721Subgraph,
+            },
           },
         },
-      } as NftResolverConfig
+      }
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig))
 
@@ -276,14 +306,18 @@ describe('NFT DID Resolver (TheGraph)', () => {
       const cosmos721Subgraph = 'http://api.thegraph.com/subgraphs/name/cosmos/721-subgraph'
       fetchMock.mockOnceIf(cosmos721Subgraph, JSON.stringify(erc721OwnerResponse))
 
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'cosmos:iov-nftnet': {
-            erc721: cosmos721Subgraph,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc721: cosmos721Subgraph,
+            },
           },
         },
-      } as NftResolverConfig
+      }
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig))
 
@@ -393,14 +427,18 @@ describe('NFT DID Resolver (TheGraph)', () => {
       const custom1155Subgraph = 'http://api.thegraph.com/subgraphs/name/aoeuaoeudhtn/subgraph'
       fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse))
 
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'eip155:1': {
-            erc1155: custom1155Subgraph,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc1155: custom1155Subgraph,
+            },
           },
         },
-      } as NftResolverConfig
+      }
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig))
 
@@ -419,14 +457,18 @@ describe('NFT DID Resolver (TheGraph)', () => {
       const custom1155Subgraph = 'http://api.thegraph.com/subgraphs/name/cosmos/subgraph'
       fetchMock.mockOnceIf(custom1155Subgraph, JSON.stringify(erc1155OwnersResponse))
 
-      const customConfig = {
+      const customConfig: NftResolverConfig = {
         ceramic: (global as any).ceramic,
-        subGraphUrls: {
+        chains: {
           'cosmos:iov-mainnet': {
-            erc1155: custom1155Subgraph,
+            blocks: BLOCK_QUERY_URL,
+            skew: 15000,
+            assets: {
+              erc1155: custom1155Subgraph,
+            },
           },
         },
-      } as NftResolverConfig
+      }
 
       const customResolver = new Resolver(NftResolver.getResolver(customConfig))
 

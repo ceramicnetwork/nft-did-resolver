@@ -47,22 +47,26 @@ function idToAsset(id: string): AssetID {
 
 async function assetToAccount(
   asset: AssetID,
-  timestamp: number,
-  customSubgraph?: SubGraphUrls
+  timestamp: number | undefined,
+  chains: Record<string, ChainConfig | undefined>
 ): Promise<AccountID[]> {
+  const assetChainId = asset.chainId.toString()
+  const chain = chains[assetChainId]
+  if (!chain) {
+    throw new Error(`No chain configuration for ${assetChainId}`)
+  }
+
   // we want to query what block is at the timestamp IFF it is an (older) existing timestamp
   let queryBlock = 0
-  if (timestamp && !isWithinLastBlock(timestamp)) {
-    queryBlock = await blockAtTime(timestamp)
+  if (timestamp && !isWithinLastBlock(timestamp, chain.skew)) {
+    queryBlock = await blockAtTime(timestamp, chain.blocks)
   }
 
   let owners: string[]
-
-  const assetChainId = asset.chainId.toString()
   let ercSubgraphUrls = undefined
 
-  if (customSubgraph && customSubgraph[assetChainId]) {
-    ercSubgraphUrls = customSubgraph[assetChainId]
+  if (chains && chains[assetChainId]) {
+    ercSubgraphUrls = chains[assetChainId].assets
   }
 
   if (asset.namespace === 'erc721') {
@@ -142,55 +146,58 @@ function getVersionTime(query = ''): number {
 }
 
 function validateResolverConfig(config: NftResolverConfig) {
-  if (!config?.ceramic) {
+  if (!config) {
+    throw new Error(`Missing nft-did-resolver config`)
+  }
+  if (!config.ceramic) {
     throw new Error('Missing ceramic client in nft-did-resolver config')
-  } else if (config.subGraphUrls) {
-    try {
-      const urlOverrides = config.subGraphUrls
-      // ensure that any provided chainId and url are valid
-      for (const chainId in urlOverrides) {
-        // check chainId validity
-        ChainID.parse(chainId)
-
-        for (const subgraphUrl in urlOverrides[chainId]) {
-          // assert that each url provided is also valid
-          new URL(urlOverrides[chainId][subgraphUrl])
-        }
-      }
-    } catch (e) {
-      throw new Error(`Invalid config for nft-did-resolver: ${(<Error>e).message}`)
-    }
+  }
+  const chains = config.chains
+  if (!chains) {
+    throw new Error('Missing chain parameters in nft-did-resolver config')
+  }
+  try {
+    Object.entries(config.chains).forEach(([chainId, chainConfig]) => {
+      ChainID.parse(chainId)
+      new URL(chainConfig.blocks)
+      Object.values(chainConfig.assets).forEach((subgraph) => {
+        new URL(subgraph)
+      })
+    })
+  } catch (e) {
+    throw new Error(`Invalid config for nft-did-resolver: ${e.message}`)
   }
 }
 
-interface NftNamespaceSubGraphs {
-  [namespace: string]: string
-}
-
-interface SubGraphUrls {
-  [caip2ChainId: string]: NftNamespaceSubGraphs
+export type ChainConfig = {
+  blocks: string
+  skew: number
+  assets: Record<string, string>
 }
 
 /**
  * When passing in a custom subgraph url, it must conform to the same standards as
  * represented by the included ERC721 and ERC1155 subgraphs
  * Example:
+ * ```
  * const customConfig = {
- *   ceramic: ceramicClient,
- *   subGraphUrls: {
- *     'eip155:1': {
- *       erc721: https://api.thegraph.com/subgraphs/name/xxx/yyy,
- *       erc1155: https://api.thegraph.com/subgraphs/name/abc/xyz
- *     },
- *     'cosmos:nft-token-fake-chainid': {
- *       erc721: 'https://api.thegraph.com/subgraphs/name/aaa/ooo'
- *     }
- *   }
+ *  ceramic: ceramicClient,
+ *  chains: {
+ *    "eip155:1": {
+ *      "blocks": "https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks",
+ *      "skew": 15000, // in milliseconds
+ *      "assets": {
+ *        "erc1155": "https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph",
+ *        "erc721": "https://api.thegraph.com/subgraphs/name/touchain/erc721track",
+ *      }
+ *    }
+ *  }
  * }
+ * ```
  */
-export interface NftResolverConfig {
+export type NftResolverConfig = {
   ceramic: CeramicApi
-  subGraphUrls?: SubGraphUrls
+  chains: Record<string, ChainConfig>
 }
 
 async function resolve(
@@ -201,7 +208,7 @@ async function resolve(
 ): Promise<DIDResolutionResult> {
   const asset = idToAsset(methodId)
   // for 1155s, there can be many accounts that own a single asset
-  const owningAccounts = await assetToAccount(asset, timestamp, config.subGraphUrls)
+  const owningAccounts = await assetToAccount(asset, timestamp, config.chains)
   const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic)
   const metadata: DIDDocumentMetadata = {}
 

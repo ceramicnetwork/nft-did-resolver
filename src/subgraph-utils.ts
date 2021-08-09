@@ -2,11 +2,6 @@ import fetch from 'cross-fetch'
 import { jsonToGraphQLQuery } from 'json-to-graphql-query'
 import { AssetID } from '.'
 
-const GRAPH_API_PREFIX = 'https://api.thegraph.com/subgraphs/name'
-const BLOCK_QUERY_URL = `${GRAPH_API_PREFIX}/yyong1010/ethereumblocks`
-const ERC721_QUERY_URL = `${GRAPH_API_PREFIX}/touchain/erc721track`
-const ERC1155_QUERY_URL = `${GRAPH_API_PREFIX}/amxx/eip1155-subgraph`
-
 export const fetchQueryData = async (queryUrl: string, query: unknown): Promise<any> => {
   const fetchOpts = {
     method: 'POST',
@@ -37,9 +32,10 @@ type BlockQueryResponse = {
 /**
  * Queries TheGraph to find the latest block at the given time.
  * @param timestamp
+ * @param blockQueryUrl - subgraph url for blocks
  * @returns {string} latest block num at timestamp
  */
-export const blockAtTime = async (timestamp: number): Promise<number> => {
+export const blockAtTime = async (timestamp: number, blockQueryUrl: string): Promise<number> => {
   const query = {
     blocks: {
       __args: {
@@ -55,7 +51,7 @@ export const blockAtTime = async (timestamp: number): Promise<number> => {
     },
   }
 
-  const queryData = (await fetchQueryData(BLOCK_QUERY_URL, query)) as BlockQueryResponse
+  const queryData = (await fetchQueryData(blockQueryUrl, query)) as BlockQueryResponse
 
   if (!queryData?.blocks) {
     throw new Error('Missing data from subgraph query')
@@ -69,8 +65,8 @@ export const blockAtTime = async (timestamp: number): Promise<number> => {
  * Eth blocks are typically 13 seconds. We use this check so we don't have to
  * make an unneccessary call to the blocks subgraph if the did was just created.
  */
-export const isWithinLastBlock = (timestamp: number): boolean => {
-  return Date.now() - timestamp <= 10 * 1000
+export const isWithinLastBlock = (timestamp: number, skew: number): boolean => {
+  return Date.now() - timestamp <= skew
 }
 
 type ERC721DataResponse = {
@@ -84,7 +80,7 @@ type ERC721DataResponse = {
 export const erc721OwnerOf = async (
   asset: AssetID,
   blockNum: number,
-  customSubgraph?: string
+  queryUrl: string
 ): Promise<string> => {
   const query = {
     tokens: {
@@ -102,7 +98,6 @@ export const erc721OwnerOf = async (
     },
   }
 
-  const queryUrl = customSubgraph || ERC721_QUERY_URL
   const queryData = (await fetchQueryData(queryUrl, query)) as ERC721DataResponse
 
   if (!queryData?.tokens) {
@@ -129,7 +124,7 @@ type ERC1155DataResponse = {
 export const erc1155OwnersOf = async (
   asset: AssetID,
   blockNum: number,
-  customSubgraph?: string
+  queryUrl: string
 ): Promise<string[]> => {
   const query = {
     tokens: {
@@ -155,7 +150,6 @@ export const erc1155OwnersOf = async (
     },
   }
 
-  const queryUrl = customSubgraph || ERC1155_QUERY_URL
   const queryData = (await fetchQueryData(queryUrl, query)) as ERC1155DataResponse
 
   if (!queryData?.tokens[0]) {
