@@ -22,12 +22,7 @@ export function didToCaip(id: string): AssetId {
     .replace(/^did:nft:/, '')
     .replace(/\?.+$/, '')
     .replace(/_/g, '/')
-    .replace(/\./g, ':')
-  const parsed = AssetId.parse(caip)
-  parsed.tokenId = parsed.tokenId.startsWith('0x')
-    ? parsed.tokenId
-    : `0x${Number(parsed.tokenId).toString(16)}`
-  return new AssetId(parsed)
+  return new AssetId(AssetId.parse(caip))
 }
 
 async function assetToAccount(
@@ -216,9 +211,6 @@ export function caipToDid(assetId: AssetId, timestamp?: number): string {
     ? `?versionTime=${new Date(timestamp * 1000).toISOString().split('.')[0] + 'Z'}`
     : ''
 
-  if (!assetId.tokenId.startsWith('0x')) {
-    assetId.tokenId = `0x${Number(assetId.tokenId).toString(16)}`
-  }
   const id = assetId.toString().replace(/\//g, '_')
   return `did:nft:${id}${query}`
 }
@@ -289,6 +281,7 @@ export default {
         resolver: Resolver,
         options: DIDResolutionOptions
       ): Promise<DIDResolutionResult> => {
+        console.log('res.0', did, parsed)
         const contentType = options.accept || DID_JSON
         try {
           const timestamp = getVersionTime(parsed.query)

@@ -228,7 +228,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     it('throws on invalid ERC721 contract', async () => {
       fetchMock.once(JSON.stringify(erc721NoResponse))
       const invalidContract = '0x1234567891234567891234567891234596351156'
-      const tokenId = '0x1'
+      const tokenId = '1'
 
       const nftVector = nftVectorBuilder
         .setNftContract(invalidContract)
@@ -243,7 +243,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
 
     it('throws on non-existent ERC721 token with valid contract', async () => {
       fetchMock.once(JSON.stringify(erc721NoResponse))
-      const tokenId = '0x2dfdc1c3e'
+      const tokenId = '12345678910'
 
       const nftVector = nftVectorBuilder
         .setNftContract(erc721Contract)
@@ -540,24 +540,19 @@ function createEthAuthProvider(ethSigner: ethers.providers.JsonRpcSigner, ethAcc
 }
 
 describe('caipToDid', () => {
-  const hex = 'eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1'
-  const int = 'eip155:1/erc721:0x1234567891234567891234567891234596351156/1'
+  const int = 'eip155:1/erc721:0x1234567891234567891234567891234596351156/2720832862426401332656396037314633594'
 
   test('converts caip AssetId to did-nft URL', () => {
-    const didUrlHex = caipToDid(new AssetId(AssetId.parse(hex)))
-    const didUrlInt = caipToDid(new AssetId(AssetId.parse(int)))
-    expect(didUrlInt).toEqual(didUrlHex)
-    expect(didUrlHex).toEqual(
-      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1'
+    const didUrl = caipToDid(new AssetId(AssetId.parse(int)))
+    expect(didUrl).toEqual(
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594'
     )
   })
   test('with timestamp', () => {
     const timestamp = 1628529680
-    const didUrlHex = caipToDid(new AssetId(AssetId.parse(hex)), timestamp)
-    const didUrlInt = caipToDid(new AssetId(AssetId.parse(int)), timestamp)
-    expect(didUrlInt).toEqual(didUrlHex)
-    expect(didUrlHex).toEqual(
-      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
+    const didUrl = caipToDid(new AssetId(AssetId.parse(int)), timestamp)
+    expect(didUrl).toEqual(
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594?versionTime=2021-08-09T17:21:20Z'
     )
   })
 })
@@ -571,33 +566,26 @@ describe('createNftDidUrl', () => {
 
   test('converts params to did-nft URL', () => {
     const url = createNftDidUrl(params)
-    expect(url).toEqual('did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1')
+    expect(url).toEqual('did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1')
   })
 
   test('with timestamp', () => {
     const url = createNftDidUrl({ ...params, timestamp: 1628529680 })
     expect(url).toEqual(
-      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z'
     )
   })
 })
 
 describe('didToCaip', () => {
-  const hex = 'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1'
-  const int = 'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1'
-  const hexWithTimestamp =
-    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
-  const intWithTimestamp =
-    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z'
+  const url = 'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594'
+  const withTimestamp =
+    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594?versionTime=2021-08-09T17:21:20Z'
 
   test('convert did:nft id to caip AssetId', () => {
-    const fromHex = didToCaip(hex)
-    const fromInt = didToCaip(int)
-    expect(fromInt).toEqual(fromHex)
-    const fromHexWithTimestamp = didToCaip(hexWithTimestamp)
-    const fromIntWithTimestamp = didToCaip(intWithTimestamp)
-    expect(fromIntWithTimestamp).toEqual(fromHexWithTimestamp)
-    expect(fromHexWithTimestamp).toEqual(fromHex)
-    expect(fromHex).toMatchSnapshot()
+    const fromInt = didToCaip(url)
+    const fromIntWithTimestamp = didToCaip(withTimestamp)
+    expect(fromIntWithTimestamp).toEqual(fromInt)
+    expect(fromInt).toMatchSnapshot()
   })
 })

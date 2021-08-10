@@ -1,6 +1,7 @@
 import fetch from 'cross-fetch'
 import { jsonToGraphQLQuery } from 'json-to-graphql-query'
 import { AssetId } from 'caip'
+import BigNumber from 'bignumber.js'
 
 export const fetchQueryData = async (queryUrl: string, query: unknown): Promise<any> => {
   const fetchOpts = {
@@ -82,12 +83,12 @@ export const erc721OwnerOf = async (
   blockNum: number,
   queryUrl: string
 ): Promise<string> => {
+  const tokenId = `0x${new BigNumber(asset.tokenId).toString(16)}`
   const query = {
     tokens: {
       __args: {
         where: {
-          // contract: asset.reference, // not necessary
-          id: [asset.assetName.reference, asset.tokenId].join('-'),
+          id: [asset.assetName.reference, tokenId].join('-'),
         },
         first: 1,
         block: blockNum ? { number: blockNum } : null,
@@ -126,13 +127,12 @@ export const erc1155OwnersOf = async (
   blockNum: number,
   queryUrl: string
 ): Promise<string[]> => {
+  const tokenId = `0x${new BigNumber(asset.tokenId).toString(16)}`
   const query = {
     tokens: {
       __args: {
         where: {
-          registry: asset.assetName.reference,
-          identifier: asset.tokenId,
-          // id: [asset.reference, `0x${asset.tokenId}`].join('-') // could use this instead
+          id: [asset.assetName.reference, tokenId].join('-'),
         },
         first: 1,
         block: blockNum ? { number: blockNum } : null,

@@ -81,7 +81,7 @@ export class NftDidVectorBuilder {
   }
 
   setNftId(nftId: string): NftDidVectorBuilder {
-    this.nftId = nftId.startsWith('0x') ? nftId : `0x${Number(nftId).toString(16)}`
+    this.nftId = nftId
     return this
   }
 
@@ -134,7 +134,7 @@ export class NftDidVectorBuilder {
     if (!this.nftContract || !this.nftId) {
       throw new Error('Must provide contract address and id OR DID.')
     }
-    return `did:nft:${this.caip2ChainId}_${this.nftNamespace}.${this.nftContract}_${this.nftId}`
+    return `did:nft:${this.caip2ChainId}_${this.nftNamespace}:${this.nftContract}_${this.nftId}`
   }
 
   private makeVerificationMethods(): VerificationMethod[] {
