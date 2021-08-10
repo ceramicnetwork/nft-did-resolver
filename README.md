@@ -67,6 +67,13 @@ console.log(erc721result, erc1155result)
 Each such `chain` is expected to contain endpoints to ERC721 and/or ERC1155 subgraphs under `assets` field.
 Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
 
+The resolver supports the following networks by default:
+- Ethereum mainnet (`eip155:1`),
+- Ethereum Rinkeby (`eip155:4`),
+- Polygon (formerly Matic) (`eip155:137`).
+
+If you use one of those, you do not have to provide `chains` field.
+
 ## Testing
 
 ```

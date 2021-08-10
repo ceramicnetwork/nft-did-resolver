@@ -12,6 +12,7 @@ import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
 import { ChainId, AccountId, AssetId } from 'caip'
 import { DIDDocumentMetadata } from 'did-resolver'
 import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraph-utils'
+import merge from 'merge-options'
 
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
@@ -97,13 +98,13 @@ async function accountsToDids(
 
 function wrapDocument(did: string, accounts: AccountId[], controllers?: string[]): DIDDocument {
   // Each of the owning accounts is a verification method (at the point in time)
-  const verificationMethods = accounts.slice().map((account) => {
+  const verificationMethods = accounts.slice().map<VerificationMethod>((account) => {
     return {
       id: `${did}#${account.address}`,
       type: 'BlockchainVerificationMethod2021',
       controller: did,
       blockchainAccountId: account.toString(),
-    } as VerificationMethod
+    }
   })
 
   const doc: DIDDocument = {
@@ -129,7 +130,7 @@ function getVersionTime(query = ''): number {
   return 0 // 0 is falsey
 }
 
-function validateResolverConfig(config: NftResolverConfig) {
+function validateResolverConfig(config: Partial<NftResolverConfig>) {
   if (!config) {
     throw new Error(`Missing nft-did-resolver config`)
   }
@@ -202,7 +203,7 @@ async function resolve(
     didResolutionMetadata: { contentType: DID_JSON },
     didDocument: wrapDocument(did, owningAccounts, controllers),
     didDocumentMetadata: metadata,
-  } as DIDResolutionResult
+  }
 }
 
 /**
@@ -222,8 +223,43 @@ export function caipToDid(assetId: AssetId, timestamp?: number): string {
   return `did:nft:${id}${query}`
 }
 
+function withDefaultConfig(config: Partial<NftResolverConfig>): NftResolverConfig {
+  const defaults = {
+    chains: {
+      'eip155:1': {
+        blocks: 'https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks',
+        skew: 15000,
+        assets: {
+          erc721: 'https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc721-subgraph',
+          erc1155: 'https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc1155-subgraph',
+        },
+      },
+      'eip155:4': {
+        blocks: 'https://api.thegraph.com/subgraphs/name/mul53/rinkeby-blocks',
+        skew: 15000,
+        assets: {
+          erc721: 'https://api.thegraph.com/subgraphs/name/sunguru98/erc721-rinkeby-subgraph',
+          erc1155: 'https://api.thegraph.com/subgraphs/name/sunguru98/erc1155-rinkeby-subgraph',
+        },
+      },
+      'eip155:137': {
+        blocks: 'https://api.thegraph.com/subgraphs/name/matthewlilley/polygon-blocks',
+        skew: 2200,
+        assets: {
+          erc721: 'https://api.thegraph.com/subgraphs/name/yellow-heart/maticsubgraph',
+          erc1155: 'https://api.thegraph.com/subgraphs/name/tranchien2002/eip1155-matic',
+        },
+      },
+    },
+  }
+  return merge.bind({ ignoreUndefined: true })(defaults, config)
+}
+
 export default {
-  getResolver: (config: NftResolverConfig): ResolverRegistry => {
+  getResolver: (
+    config: Partial<NftResolverConfig> & Required<{ ceramic: CeramicApi }>
+  ): ResolverRegistry => {
+    config = withDefaultConfig(config)
     validateResolverConfig(config)
     return {
       nft: async (
@@ -235,7 +271,7 @@ export default {
         const contentType = options.accept || DID_JSON
         try {
           const timestamp = getVersionTime(parsed.query)
-          const didResult = await resolve(did, parsed.id, timestamp, config)
+          const didResult = await resolve(did, parsed.id, timestamp, config as NftResolverConfig)
 
           if (contentType === DID_LD_JSON) {
             didResult.didDocument['@context'] = 'https://w3id.org/did/v1'
