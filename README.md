@@ -185,17 +185,12 @@ import { caipToDid, didToCaip, createNftDidUrl } from 'nft-did-resolver'
 import { AssetId } from 'caip'
 
 // CAIP -> DID URL
-const assetId = new AssetId(
-  AssetId.parse('eip155:1/erc721:0x1234567891234567891234567891234596351156/1')
-)
-const didUrl = caipToDid(assetId) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1
-const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z
-// If you do not use `caip` library:
-const fromRawParams = createNftDidUrl({
+const didUrl = createNftDidUrl({
   chainId: 'eip155:1',
   namespace: 'erc721:0x1234567891234567891234567891234596351156',
   tokenId: '1',
 })
+// If you use `caip` library in your app, consider using sister `caipToDid` function to convert `AssetId` to NFT DID URL. 
 
 // DID URL -> CAIP
 const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/1
