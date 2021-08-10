@@ -186,10 +186,10 @@ import { AssetId } from 'caip'
 
 // CAIP -> DID URL
 const assetId = new AssetId(
-  AssetId.parse('eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1')
+  AssetId.parse('eip155:1/erc721:0x1234567891234567891234567891234596351156/1')
 )
-const didUrl = caipToDid(assetId) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1
-const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z
+const didUrl = caipToDid(assetId) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1
+const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z
 // If you do not use `caip` library:
 const fromRawParams = createNftDidUrl({
   chainId: 'eip155:1',
@@ -198,8 +198,8 @@ const fromRawParams = createNftDidUrl({
 })
 
 // DID URL -> CAIP
-const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1
-const assetId2 = didToCaip(didUrlWithTimestamp) // eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1
+const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/1
+const assetId2 = didToCaip(didUrlWithTimestamp) // eip155:1/erc721:0x1234567891234567891234567891234596351156/1
 ```
 
 ## Contributing
