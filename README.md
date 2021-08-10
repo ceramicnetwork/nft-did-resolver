@@ -55,10 +55,10 @@ const nftResolver = NftResolver.getResolver(config)
 const didResolver = Resolver(nftResolver)
 
 const erc721result = await didResolver.resolve(
-  'did:nft:eip155.1_erc721.0xb300a43751601bd54ffee7de35929537b28e1488_2'
+  'did:nft:eip155:1_erc721:0xb300a43751601bd54ffee7de35929537b28e1488_2'
 )
 const erc1155result = await didResolver.resolve(
-  'did:nft:eip155.1_erc1155.0x06eb48572a2ef9a3b230d69ca731330793b65bdc_1'
+  'did:nft:eip155:1_erc1155:0x06eb48572a2ef9a3b230d69ca731330793b65bdc_1'
 )
 console.log(erc721result, erc1155result)
 ```
@@ -153,13 +153,13 @@ The token DIDs are prefixed with `did:nft:`, and the latter half is a modified C
 
 **ERC721** ([CAIP-22](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-22.md))
 
-DID: `did:nft:{chainNamespace}.{chainReference}_erc721.{contractAddress}_{tokenId}`
+DID: `did:nft:{chainNamespace}:{chainReference}_erc721:{contractAddress}_{tokenId}`
 
 CAIP-22: `{chainNamespace}:{chainReference}/erc721:{contractAddress}/{tokenId}`
 
 **ERC1155** ([CAIP-29](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-29.md))
 
-DID: `did:nft:{chainNamespace}.{chainReference}_erc1155.{contractAddress}_{tokenId}`
+DID: `did:nft:{chainNamespace}:{chainReference}_erc1155:{contractAddress}_{tokenId}`
 
 CAIP-29: `{chainNamespace}:{chainReference}/erc1155:{contractAddress}/{tokenId}`
 
@@ -168,13 +168,13 @@ CAIP-29: `{chainNamespace}:{chainReference}/erc1155:{contractAddress}/{tokenId}`
 **DID->CAIP**
 
 ```
-const caip = did.substr(8).replace(/_/g, '/').replace(/\./g, ':')
+const caip = did.substr(8).replace(/_/g, '/')
 ```
 
 **CAIP->DID**
 
 ```
-const did = `did:nft:${caip.replace(/\//g, '_').replace(/:/g, '.')}`
+const did = `did:nft:${caip.replace(/\//g, '_')
 ```
 
 There are helpers that help you with the conversion:
@@ -187,8 +187,8 @@ import { AssetId } from 'caip'
 const assetId = new AssetId(
   AssetId.parse('eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1')
 )
-const didUrl = caipToDid(assetId) // did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1
-const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z
+const didUrl = caipToDid(assetId) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1
+const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z
 
 // DID URL -> CAIP
 const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1

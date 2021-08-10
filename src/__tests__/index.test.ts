@@ -548,7 +548,7 @@ describe('caipToDid', () => {
     const didUrlInt = caipToDid(new AssetId(AssetId.parse(int)))
     expect(didUrlInt).toEqual(didUrlHex)
     expect(didUrlHex).toEqual(
-      'did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1'
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1'
     )
   })
   test('with timestamp', () => {
@@ -557,18 +557,18 @@ describe('caipToDid', () => {
     const didUrlInt = caipToDid(new AssetId(AssetId.parse(int)), timestamp)
     expect(didUrlInt).toEqual(didUrlHex)
     expect(didUrlHex).toEqual(
-      'did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
     )
   })
 })
 
 describe('didToCaip', () => {
-  const hex = 'did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1'
-  const int = 'did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_1'
+  const hex = 'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1'
+  const int = 'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1'
   const hexWithTimestamp =
-    'did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
+    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
   const intWithTimestamp =
-    'did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z'
+    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z'
 
   test('convert did:nft id to caip AssetId', () => {
     const fromHex = didToCaip(hex)

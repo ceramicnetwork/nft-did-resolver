@@ -219,7 +219,7 @@ export function caipToDid(assetId: AssetId, timestamp?: number): string {
   if (!assetId.tokenId.startsWith('0x')) {
     assetId.tokenId = `0x${Number(assetId.tokenId).toString(16)}`
   }
-  const id = assetId.toString().replace(/\//g, '_').replace(/:/g, '.')
+  const id = assetId.toString().replace(/\//g, '_')
   return `did:nft:${id}${query}`
 }
 
