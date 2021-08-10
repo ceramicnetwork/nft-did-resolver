@@ -1,6 +1,7 @@
 import fetch from 'cross-fetch'
 import { jsonToGraphQLQuery } from 'json-to-graphql-query'
-import { AssetID } from '.'
+import { AssetId } from 'caip'
+import BigNumber from 'bignumber.js'
 
 export const fetchQueryData = async (queryUrl: string, query: unknown): Promise<any> => {
   const fetchOpts = {
@@ -78,16 +79,16 @@ type ERC721DataResponse = {
 }
 
 export const erc721OwnerOf = async (
-  asset: AssetID,
+  asset: AssetId,
   blockNum: number,
   queryUrl: string
 ): Promise<string> => {
+  const tokenId = `0x${new BigNumber(asset.tokenId).toString(16)}`
   const query = {
     tokens: {
       __args: {
         where: {
-          // contract: asset.reference, // not necessary
-          id: [asset.reference, asset.tokenId].join('-'),
+          id: [asset.assetName.reference, tokenId].join('-'),
         },
         first: 1,
         block: blockNum ? { number: blockNum } : null,
@@ -104,7 +105,7 @@ export const erc721OwnerOf = async (
     throw new Error('Missing data from subgraph query')
   } else if (queryData.tokens.length === 0) {
     throw new Error(
-      `No owner found for ERC721 NFT ID: ${asset.tokenId} for contract: ${asset.reference}`
+      `No owner found for ERC721 NFT ID: ${asset.tokenId} for contract: ${asset.assetName.reference}`
     )
   }
 
@@ -122,17 +123,16 @@ type ERC1155DataResponse = {
 }
 
 export const erc1155OwnersOf = async (
-  asset: AssetID,
+  asset: AssetId,
   blockNum: number,
   queryUrl: string
 ): Promise<string[]> => {
+  const tokenId = `0x${new BigNumber(asset.tokenId).toString(16)}`
   const query = {
     tokens: {
       __args: {
         where: {
-          registry: asset.reference,
-          identifier: asset.tokenId,
-          // id: [asset.reference, `0x${asset.tokenId}`].join('-') // could use this instead
+          id: [asset.assetName.reference, tokenId].join('-'),
         },
         first: 1,
         block: blockNum ? { number: blockNum } : null,
@@ -154,11 +154,11 @@ export const erc1155OwnersOf = async (
 
   if (!queryData?.tokens[0]) {
     throw new Error(
-      `No tokens with ERC1155 NFT ID: ${asset.tokenId} found for contract: ${asset.reference}`
+      `No tokens with ERC1155 NFT ID: ${asset.tokenId} found for contract: ${asset.assetName.reference}`
     )
   } else if (!queryData.tokens[0].balances || queryData.tokens[0].balances.length === 0) {
     throw new Error(
-      `No owner found for ERC1155 NFT ID: ${asset.tokenId} for contract: ${asset.reference}`
+      `No owner found for ERC1155 NFT ID: ${asset.tokenId} for contract: ${asset.assetName.reference}`
     )
   }
 

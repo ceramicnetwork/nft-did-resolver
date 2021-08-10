@@ -2,7 +2,7 @@
  * @jest-environment ceramic
  */
 
-import NftResolver, { NftResolverConfig } from '../index'
+import NftResolver, { caipToDid, createNftDidUrl, didToCaip, NftResolverConfig } from '../index'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
@@ -11,6 +11,7 @@ import fetchMock from 'jest-fetch-mock'
 import { ethers } from 'ethers'
 import { NftDidVectorBuilder, NftDidVector } from './nft-did-vector'
 import ganache from 'ganache-core'
+import { AssetId } from 'caip'
 
 const ERC721_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/touchain/erc721track'
 const ERC1155_QUERY_URL = 'https://api.thegraph.com/subgraphs/name/amxx/eip1155-subgraph'
@@ -227,7 +228,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
     it('throws on invalid ERC721 contract', async () => {
       fetchMock.once(JSON.stringify(erc721NoResponse))
       const invalidContract = '0x1234567891234567891234567891234596351156'
-      const tokenId = '0x1'
+      const tokenId = '1'
 
       const nftVector = nftVectorBuilder
         .setNftContract(invalidContract)
@@ -237,13 +238,12 @@ describe('NFT DID Resolver (TheGraph)', () => {
         )
         .build()
 
-      console.log('nft-v', nftVector)
       await expectVectorResult(resolver, nftVector)
     })
 
     it('throws on non-existent ERC721 token with valid contract', async () => {
       fetchMock.once(JSON.stringify(erc721NoResponse))
-      const tokenId = '0x2dfdc1c3e'
+      const tokenId = '12345678910'
 
       const nftVector = nftVectorBuilder
         .setNftContract(erc721Contract)
@@ -538,3 +538,57 @@ function createEthAuthProvider(ethSigner: ethers.providers.JsonRpcSigner, ethAcc
     ethAccount
   )
 }
+
+describe('caipToDid', () => {
+  const int =
+    'eip155:1/erc721:0x1234567891234567891234567891234596351156/2720832862426401332656396037314633594'
+
+  test('converts caip AssetId to did-nft URL', () => {
+    const didUrl = caipToDid(new AssetId(AssetId.parse(int)))
+    expect(didUrl).toEqual(
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594'
+    )
+  })
+  test('with timestamp', () => {
+    const timestamp = 1628529680
+    const didUrl = caipToDid(new AssetId(AssetId.parse(int)), timestamp)
+    expect(didUrl).toEqual(
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594?versionTime=2021-08-09T17:21:20Z'
+    )
+  })
+})
+
+describe('createNftDidUrl', () => {
+  const params = {
+    chainId: 'eip155:1',
+    namespace: 'erc721',
+    contract: '0x1234567891234567891234567891234596351156',
+    tokenId: '1',
+  }
+
+  test('converts params to did-nft URL', () => {
+    const url = createNftDidUrl(params)
+    expect(url).toEqual('did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1')
+  })
+
+  test('with timestamp', () => {
+    const url = createNftDidUrl({ ...params, timestamp: 1628529680 })
+    expect(url).toEqual(
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_1?versionTime=2021-08-09T17:21:20Z'
+    )
+  })
+})
+
+describe('didToCaip', () => {
+  const url =
+    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594'
+  const withTimestamp =
+    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594?versionTime=2021-08-09T17:21:20Z'
+
+  test('convert did:nft id to caip AssetId', () => {
+    const fromInt = didToCaip(url)
+    const fromIntWithTimestamp = didToCaip(withTimestamp)
+    expect(fromIntWithTimestamp).toEqual(fromInt)
+    expect(fromInt).toMatchSnapshot()
+  })
+})

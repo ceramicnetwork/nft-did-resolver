@@ -29,16 +29,14 @@ export class NftDidVector {
 
   getResult(): DIDResolutionResult {
     if (this.errorMessage) {
-      const resolutionResult = {
+      return {
         didDocument: null,
         didDocumentMetadata: {},
         didResolutionMetadata: {
           error: 'invalidDid',
           message: this.errorMessage,
         },
-      } as DIDResolutionResult
-
-      return resolutionResult
+      }
     }
 
     const resolutionResult = {
@@ -136,9 +134,7 @@ export class NftDidVectorBuilder {
     if (!this.nftContract || !this.nftId) {
       throw new Error('Must provide contract address and id OR DID.')
     }
-    // caip2 uses a colon, while the did uses a period
-    const chainId = this.caip2ChainId.replace(':', '.')
-    return `did:nft:${chainId}_${this.nftNamespace}.${this.nftContract}_${this.nftId}`
+    return `did:nft:${this.caip2ChainId}_${this.nftNamespace}:${this.nftContract}_${this.nftId}`
   }
 
   private makeVerificationMethods(): VerificationMethod[] {
@@ -150,10 +146,10 @@ export class NftDidVectorBuilder {
 
     return this.nftOwners.slice().map((owner) => {
       return {
-        id: `${this.nftDid}#${owner}`,
+        id: `${this.nftDid}#${owner.slice(2, 14)}`,
         type: 'BlockchainVerificationMethod2021',
         controller: this.nftDid,
-        blockchainAccountId: `${owner}@${this.caip2ChainId}`,
+        blockchainAccountId: `${this.caip2ChainId}:${owner}`,
       } as VerificationMethod
     })
   }
