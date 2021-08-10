@@ -68,6 +68,7 @@ Each such `chain` is expected to contain endpoints to ERC721 and/or ERC1155 subg
 Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
 
 The resolver supports the following networks by default:
+
 - Ethereum mainnet (`eip155:1`),
 - Ethereum Rinkeby (`eip155:4`),
 - Polygon (formerly Matic) (`eip155:137`).
@@ -180,7 +181,7 @@ const did = `did:nft:${caip.replace(/\//g, '_')
 There are helpers that help you with the conversion:
 
 ```typescript
-import { caipToDid, didToCaip } from 'nft-did-resolver'
+import { caipToDid, didToCaip, createNftDidUrl } from 'nft-did-resolver'
 import { AssetId } from 'caip'
 
 // CAIP -> DID URL
@@ -189,6 +190,12 @@ const assetId = new AssetId(
 )
 const didUrl = caipToDid(assetId) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1
 const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z
+// If you do not use `caip` library:
+const fromRawParams = createNftDidUrl({
+  chainId: 'eip155:1',
+  namespace: 'erc721:0x1234567891234567891234567891234596351156',
+  tokenId: '1',
+})
 
 // DID URL -> CAIP
 const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1

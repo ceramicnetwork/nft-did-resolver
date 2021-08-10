@@ -2,7 +2,7 @@
  * @jest-environment ceramic
  */
 
-import NftResolver, { caipToDid, didToCaip, NftResolverConfig } from '../index'
+import NftResolver, { caipToDid, createNftDidUrl, didToCaip, NftResolverConfig } from '../index'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
@@ -557,6 +557,26 @@ describe('caipToDid', () => {
     const didUrlInt = caipToDid(new AssetId(AssetId.parse(int)), timestamp)
     expect(didUrlInt).toEqual(didUrlHex)
     expect(didUrlHex).toEqual(
+      'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
+    )
+  })
+})
+
+describe('createNftDidUrl', () => {
+  const params = {
+    chainId: 'eip155:1',
+    namespace: 'erc721:0x1234567891234567891234567891234596351156',
+    tokenId: '1',
+  }
+
+  test('converts params to did-nft URL', () => {
+    const url = createNftDidUrl(params)
+    expect(url).toEqual('did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1')
+  })
+
+  test('with timestamp', () => {
+    const url = createNftDidUrl({ ...params, timestamp: 1628529680 })
+    expect(url).toEqual(
       'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z'
     )
   })

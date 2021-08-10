@@ -255,6 +255,27 @@ function withDefaultConfig(config: Partial<NftResolverConfig>): NftResolverConfi
   return merge.bind({ ignoreUndefined: true })(defaults, config)
 }
 
+export type NftDidUrlParams = {
+  chainId: string
+  namespace: string
+  tokenId: string
+  timestamp?: number
+}
+
+/**
+ * Convert NFT asset id to NFT DID URL. Can include timestamp (as unix timestamp) if provided.
+ */
+export function createNftDidUrl(params: NftDidUrlParams): string {
+  return caipToDid(
+    new AssetId({
+      chainId: params.chainId,
+      assetName: params.namespace,
+      tokenId: params.tokenId,
+    }),
+    params.timestamp
+  )
+}
+
 export default {
   getResolver: (
     config: Partial<NftResolverConfig> & Required<{ ceramic: CeramicApi }>
