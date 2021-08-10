@@ -10,9 +10,10 @@ This implementation is still a prototype. Contributions are welcome!
 
 To use a package, you would need to provide three subgraph endpoints for every network you are going to use:
 one for blocks, one for ERC721 tokens, another for ERC1155 tokens. You would also need to provide a `skew` that
-is a time (in milliseconds) within which a latest block is considered valid. Usually it is a typical block time. 
+is a time (in milliseconds) within which a latest block is considered valid. Usually it is a typical block time.
 
 ### Installation
+
 ```
 $ npm install nft-did-resolver
 ```
@@ -30,19 +31,19 @@ const config: NftResolverConfig = {
   ceramic,
   chains: {
     'eip155:1': {
-      blocks: "https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks",
+      blocks: 'https://api.thegraph.com/subgraphs/name/yyong1010/ethereumblocks',
       skew: 15000,
       assets: {
-        erc721: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc721-subgraph",
-        erc1155: "https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc1155-subgraph",
+        erc721: 'https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc721-subgraph',
+        erc1155: 'https://api.thegraph.com/subgraphs/name/sunguru98/mainnet-erc1155-subgraph',
       },
     },
     'eip155:4': {
-      blocks: "https://api.thegraph.com/subgraphs/name/mul53/rinkeby-blocks",
+      blocks: 'https://api.thegraph.com/subgraphs/name/mul53/rinkeby-blocks',
       skew: 15000,
       assets: {
-        erc721: "https://api.thegraph.com/subgraphs/name/sunguru98/erc721-rinkeby-subgraph",
-        erc1155: "https://api.thegraph.com/subgraphs/name/sunguru98/erc1155-rinkeby-subgraph",
+        erc721: 'https://api.thegraph.com/subgraphs/name/sunguru98/erc721-rinkeby-subgraph',
+        erc1155: 'https://api.thegraph.com/subgraphs/name/sunguru98/erc1155-rinkeby-subgraph',
       },
     },
   },
@@ -53,8 +54,12 @@ const config: NftResolverConfig = {
 const nftResolver = NftResolver.getResolver(config)
 const didResolver = Resolver(nftResolver)
 
-const erc721result = await didResolver.resolve('did:nft:eip155.1_erc721.0xb300a43751601bd54ffee7de35929537b28e1488_2')
-const erc1155result = await didResolver.resolve('did:nft:eip155.1_erc1155.0x06eb48572a2ef9a3b230d69ca731330793b65bdc_1')
+const erc721result = await didResolver.resolve(
+  'did:nft:eip155.1_erc721.0xb300a43751601bd54ffee7de35929537b28e1488_2'
+)
+const erc1155result = await didResolver.resolve(
+  'did:nft:eip155.1_erc1155.0x06eb48572a2ef9a3b230d69ca731330793b65bdc_1'
+)
 console.log(erc721result, erc1155result)
 ```
 
@@ -63,17 +68,19 @@ Each such `chain` is expected to contain endpoints to ERC721 and/or ERC1155 subg
 Both ERC721 and ERC1155 are supported. Feel free to specify either one or both.
 
 ## Testing
+
 ```
 $ npm test
 ```
 
 ## Custom Subgraphs
+
 You may specify custom subgraph URLs in the configuration object as shown above in [usage](#usage).
 
-**Note**: custom subgraphs must conform to the below schemas at a *minimum* for assets to be resolved properly.
+**Note**: custom subgraphs must conform to the below schemas at a _minimum_ for assets to be resolved properly.
 
 **Note**: At the moment, only ERC721 and ERC1155 asset namespaces are supported. However, CAIP2 chains beside ETH,
-for instance xDAI, with support for those namespaces *are* supported, as long as the subgraph schema is the same.
+for instance xDAI, with support for those namespaces _are_ supported, as long as the subgraph schema is the same.
 
 ### ERC721:
 
@@ -100,13 +107,14 @@ type Owner @entity {
 ```
 
 ### ERC1155:
+
 ```gql
 type Account @entity {
   id: ID!
   balances: [Balance!]! @derivedFrom(field: "account")
   ...
 }
- 
+
 type TokenRegistry @entity {
   id: ID!
   tokens: [Token!]! @derivedFrom(field: "registry")
@@ -120,7 +128,7 @@ type Token @entity {
   balances: [Balance!]! @derivedFrom(field: "token")
   ...
 }
- 
+
 type Balance @entity {
   id: ID!
   token: Token!
@@ -133,6 +141,7 @@ type Balance @entity {
 For more information on writing schemas for GraphProtocol, check out [their documentation](https://thegraph.com/docs/define-a-subgraph#defining-entities).
 
 ## DID Specs
+
 The token DIDs are prefixed with `did:nft:`, and the latter half is a modified CAIP format.
 
 **ERC721** ([CAIP-22](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-22.md))
@@ -147,21 +156,42 @@ DID: `did:nft:{chainNamespace}.{chainReference}_erc1155.{contractAddress}_{token
 
 CAIP-29: `{chainNamespace}:{chainReference}/erc1155:{contractAddress}/{tokenId}`
 
-
 ### Conversions
+
 **DID->CAIP**
+
 ```
 const caip = did.substr(8).replace(/_/g, '/').replace(/\./g, ':')
 ```
+
 **CAIP->DID**
+
 ```
 const did = `did:nft:${caip.replace(/\//g, '_').replace(/:/g, '.')}`
 ```
 
+There are helpers that help you with the conversion:
+
+```typescript
+import { caipToDid, didToCaip } from 'nft-did-resolver'
+import { AssetId } from 'caip'
+
+// CAIP -> DID URL
+const assetId = new AssetId(
+  AssetId.parse('eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1')
+)
+const didUrl = caipToDid(assetId) // did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1
+const didUrlWithTimestamp = caipToDid(assetId, 1628529680) // did:nft:eip155.1_erc721.0x1234567891234567891234567891234596351156_0x1?versionTime=2021-08-09T17:21:20Z
+
+// DID URL -> CAIP
+const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1
+const assetId2 = didToCaip(didUrlWithTimestamp) // eip155:1/erc721:0x1234567891234567891234567891234596351156/0x1
+```
 
 ## Contributing
+
 We are happy to accept small and large contributions. Make sure to check out the [Ceramic specifications](https://github.com/ceramicnetwork/specs) for details of how the protocol works.
 
-
 ## License
+
 Apache-2.0 OR MIT

@@ -16,13 +16,17 @@ import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from '
 const DID_LD_JSON = 'application/did+ld+json'
 const DID_JSON = 'application/did+json'
 
-function idToAsset(id: string): AssetId {
-  const caip = id.replace(/_/g, '/').replace(/\./g, ':')
+export function didToCaip(id: string): AssetId {
+  const caip = id
+    .replace(/^did:nft:/, '')
+    .replace(/\?.+$/, '')
+    .replace(/_/g, '/')
+    .replace(/\./g, ':')
   const parsed = AssetId.parse(caip)
   parsed.tokenId = parsed.tokenId.startsWith('0x')
     ? parsed.tokenId
     : `0x${Number(parsed.tokenId).toString(16)}`
-  return new AssetId(AssetId.parse(caip))
+  return new AssetId(parsed)
 }
 
 async function assetToAccount(
@@ -186,7 +190,7 @@ async function resolve(
   timestamp: number,
   config: NftResolverConfig
 ): Promise<DIDResolutionResult> {
-  const asset = idToAsset(methodId)
+  const asset = didToCaip(methodId)
   // for 1155s, there can be many accounts that own a single asset
   const owningAccounts = await assetToAccount(asset, timestamp, config.chains)
   const controllers = await accountsToDids(owningAccounts, timestamp, config.ceramic)
@@ -199,6 +203,23 @@ async function resolve(
     didDocument: wrapDocument(did, owningAccounts, controllers),
     didDocumentMetadata: metadata,
   } as DIDResolutionResult
+}
+
+/**
+ * Convert AssetId to did:nft URL, including timestamp, if present.
+ * @param assetId - NFT Asset
+ * @param timestamp - JS Time as unix timestamp.
+ */
+export function caipToDid(assetId: AssetId, timestamp?: number): string {
+  const query = timestamp
+    ? `?versionTime=${new Date(timestamp * 1000).toISOString().split('.')[0] + 'Z'}`
+    : ''
+
+  if (!assetId.tokenId.startsWith('0x')) {
+    assetId.tokenId = `0x${Number(assetId.tokenId).toString(16)}`
+  }
+  const id = assetId.toString().replace(/\//g, '_').replace(/:/g, '.')
+  return `did:nft:${id}${query}`
 }
 
 export default {
