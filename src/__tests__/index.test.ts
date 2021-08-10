@@ -540,7 +540,8 @@ function createEthAuthProvider(ethSigner: ethers.providers.JsonRpcSigner, ethAcc
 }
 
 describe('caipToDid', () => {
-  const int = 'eip155:1/erc721:0x1234567891234567891234567891234596351156/2720832862426401332656396037314633594'
+  const int =
+    'eip155:1/erc721:0x1234567891234567891234567891234596351156/2720832862426401332656396037314633594'
 
   test('converts caip AssetId to did-nft URL', () => {
     const didUrl = caipToDid(new AssetId(AssetId.parse(int)))
@@ -560,7 +561,8 @@ describe('caipToDid', () => {
 describe('createNftDidUrl', () => {
   const params = {
     chainId: 'eip155:1',
-    namespace: 'erc721:0x1234567891234567891234567891234596351156',
+    namespace: 'erc721',
+    contract: '0x1234567891234567891234567891234596351156',
     tokenId: '1',
   }
 
@@ -578,7 +580,8 @@ describe('createNftDidUrl', () => {
 })
 
 describe('didToCaip', () => {
-  const url = 'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594'
+  const url =
+    'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594'
   const withTimestamp =
     'did:nft:eip155:1_erc721:0x1234567891234567891234567891234596351156_2720832862426401332656396037314633594?versionTime=2021-08-09T17:21:20Z'
 

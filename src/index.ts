@@ -247,10 +247,29 @@ function withDefaultConfig(config: Partial<NftResolverConfig>): NftResolverConfi
   return merge.bind({ ignoreUndefined: true })(defaults, config)
 }
 
+/**
+ * Params for `createNftDidUrl` function.
+ */
 export type NftDidUrlParams = {
+  /**
+   * CAIP-10 Chain ID. For example: `eip155:1`
+   */
   chainId: string
-  namespace: string
+  /**
+   * Token namespace: `erc721` or `erc1155`
+   */
+  namespace: string,
+  /**
+   * Token contract address
+   */
+  contract: string
+  /**
+   * Token ID
+   */
   tokenId: string
+  /**
+   * Unix timestamp for `versionTime` DID URL query param. Helps to find NFT owners at particular point in time.
+   */
   timestamp?: number
 }
 
@@ -258,10 +277,13 @@ export type NftDidUrlParams = {
  * Convert NFT asset id to NFT DID URL. Can include timestamp (as unix timestamp) if provided.
  */
 export function createNftDidUrl(params: NftDidUrlParams): string {
+  if (!['erc721', 'erc1155'].includes(params.namespace)) {
+    throw new Error(`Only erc721 and erc1155 are supported`)
+  }
   return caipToDid(
     new AssetId({
       chainId: params.chainId,
-      assetName: params.namespace,
+      assetName: `${params.namespace}:${params.contract}`,
       tokenId: params.tokenId,
     }),
     params.timestamp
