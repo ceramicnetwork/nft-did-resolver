@@ -303,7 +303,6 @@ export default {
         resolver: Resolver,
         options: DIDResolutionOptions
       ): Promise<DIDResolutionResult> => {
-        console.log('res.0', did, parsed)
         const contentType = options.accept || DID_JSON
         try {
           const timestamp = getVersionTime(parsed.query)
