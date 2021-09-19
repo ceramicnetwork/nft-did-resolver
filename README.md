@@ -187,7 +187,8 @@ import { AssetId } from 'caip'
 // CAIP -> DID URL
 const didUrl = createNftDidUrl({
   chainId: 'eip155:1',
-  namespace: 'erc721:0x1234567891234567891234567891234596351156',
+  namespace: 'erc721',
+  contract: '0x1234567891234567891234567891234596351156'
   tokenId: '1',
 })
 // If you use `caip` library in your app, consider using sister `caipToDid` function to convert `AssetId` to NFT DID URL. 
