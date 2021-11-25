@@ -21,7 +21,7 @@ $ npm install nft-did-resolver
 ### Usage
 
 ```typescript
-import NftResolver, { NftResolverConfig } from 'nft-did-resolver'
+import { getResolver, NftResolverConfig } from 'nft-did-resolver'
 import { Resolver } from 'did-resolver'
 import Ceramic from '@ceramicnetwork/http-client'
 
@@ -51,7 +51,7 @@ const config: NftResolverConfig = {
 
 // getResolver will return an object with a key/value pair of { 'nft': resolver }
 // where resolver is a function used by the generic did resolver.
-const nftResolver = NftResolver.getResolver(config)
+const nftResolver = getResolver(config)
 const didResolver = Resolver(nftResolver)
 
 const erc721result = await didResolver.resolve(
@@ -191,7 +191,7 @@ const didUrl = createNftDidUrl({
   contract: '0x1234567891234567891234567891234596351156'
   tokenId: '1',
 })
-// If you use `caip` library in your app, consider using sister `caipToDid` function to convert `AssetId` to NFT DID URL. 
+// If you use `caip` library in your app, consider using sister `caipToDid` function to convert `AssetId` to NFT DID URL.
 
 // DID URL -> CAIP
 const assetId1 = didToCaip(didUrl) // eip155:1/erc721:0x1234567891234567891234567891234596351156/1

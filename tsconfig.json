@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ES2020",
+    "target": "ES2020",
+    "resolveJsonModule": false,
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
     "lib": ["es6", "dom", "esnext"],
-    "target": "ES2018",
     "outDir": "lib",
     "rootDir": "src",
-    "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
     "emitDecoratorMetadata": true,
@@ -17,8 +19,4 @@
     "importHelpers": true
   },
   "include": ["./src/**/*"],
-  "exclude": [
-    "node_modules",
-    "**/*.test.ts"
-  ]
 }
