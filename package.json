@@ -67,7 +67,7 @@
     "ethers": "^5.4.3",
     "ganache-core": "^2.13.2",
     "jest": "^27.0.6",
-    "jest-environment-ceramic": "^0.13.0",
+    "jest-environment-ceramic": "^0.14.0",
     "jest-fetch-mock": "^3.0.3",
     "jest-resolver-enhanced": "^1.0.1",
     "prettier": "^2.3.2",
