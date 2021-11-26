@@ -5,7 +5,6 @@
     "resolveJsonModule": false,
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
-    "lib": ["es6", "dom", "esnext"],
     "outDir": "lib",
     "rootDir": "src",
     "declaration": true,
@@ -18,5 +17,5 @@
     "noImplicitReturns": true,
     "importHelpers": true
   },
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*"]
 }
