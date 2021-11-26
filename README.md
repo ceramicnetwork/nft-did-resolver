@@ -21,7 +21,8 @@ $ npm install nft-did-resolver
 ### Usage
 
 ```typescript
-import { getResolver, NftResolverConfig } from 'nft-did-resolver'
+import { getResolver } from 'nft-did-resolver'
+import type { NftResolverConfig } from 'nft-did-resolver'
 import { Resolver } from 'did-resolver'
 import Ceramic from '@ceramicnetwork/http-client'
 
