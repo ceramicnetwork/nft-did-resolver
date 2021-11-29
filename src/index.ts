@@ -258,7 +258,7 @@ export type NftDidUrlParams = {
   /**
    * Token namespace: `erc721` or `erc1155`
    */
-  namespace: string,
+  namespace: string
   /**
    * Token contract address
    */
@@ -290,45 +290,43 @@ export function createNftDidUrl(params: NftDidUrlParams): string {
   )
 }
 
-export default {
-  getResolver: (
-    config: Partial<NftResolverConfig> & Required<{ ceramic: CeramicApi }>
-  ): ResolverRegistry => {
-    config = withDefaultConfig(config)
-    validateResolverConfig(config)
-    return {
-      nft: async (
-        did: string,
-        parsed: ParsedDID,
-        resolver: Resolver,
-        options: DIDResolutionOptions
-      ): Promise<DIDResolutionResult> => {
-        const contentType = options.accept || DID_JSON
-        try {
-          const timestamp = getVersionTime(parsed.query)
-          const didResult = await resolve(did, parsed.id, timestamp, config as NftResolverConfig)
+export function getResolver(
+  config: Partial<NftResolverConfig> & Required<{ ceramic: CeramicApi }>
+): ResolverRegistry {
+  config = withDefaultConfig(config)
+  validateResolverConfig(config)
+  return {
+    nft: async (
+      did: string,
+      parsed: ParsedDID,
+      resolver: Resolver,
+      options: DIDResolutionOptions
+    ): Promise<DIDResolutionResult> => {
+      const contentType = options.accept || DID_JSON
+      try {
+        const timestamp = getVersionTime(parsed.query)
+        const didResult = await resolve(did, parsed.id, timestamp, config as NftResolverConfig)
 
-          if (contentType === DID_LD_JSON) {
-            didResult.didDocument['@context'] = 'https://w3id.org/did/v1'
-            didResult.didResolutionMetadata.contentType = DID_LD_JSON
-          } else if (contentType !== DID_JSON) {
-            didResult.didDocument = null
-            didResult.didDocumentMetadata = {}
-            delete didResult.didResolutionMetadata.contentType
-            didResult.didResolutionMetadata.error = 'representationNotSupported'
-          }
-          return didResult
-        } catch (e) {
-          return {
-            didResolutionMetadata: {
-              error: 'invalidDid',
-              message: e.toString(),
-            },
-            didDocument: null,
-            didDocumentMetadata: {},
-          }
+        if (contentType === DID_LD_JSON) {
+          didResult.didDocument['@context'] = 'https://w3id.org/did/v1'
+          didResult.didResolutionMetadata.contentType = DID_LD_JSON
+        } else if (contentType !== DID_JSON) {
+          didResult.didDocument = null
+          didResult.didDocumentMetadata = {}
+          delete didResult.didResolutionMetadata.contentType
+          didResult.didResolutionMetadata.error = 'representationNotSupported'
         }
-      },
-    }
-  },
+        return didResult
+      } catch (e) {
+        return {
+          didResolutionMetadata: {
+            error: 'invalidDid',
+            message: e.toString(),
+          },
+          didDocument: null,
+          didDocumentMetadata: {},
+        }
+      }
+    },
+  }
 }

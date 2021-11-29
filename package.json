@@ -18,17 +18,22 @@
     "url": "git://github.com/ceramicnetwork/nft-did-resolver.git"
   },
   "license": "(Apache-2.0 OR MIT)",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "types": "./lib/index.d.ts",
   "directories": {
-    "lib": "lib"
+    "lib": "./lib"
   },
   "files": [
     "lib"
   ],
+  "sideEffects": false,
   "scripts": {
     "test": "./node_modules/.bin/jest --coverage",
-    "build": "./node_modules/.bin/tsc -p tsconfig.json",
+    "build": "./node_modules/.bin/tsc --project tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "prebuild": "npm run clean",
     "lint": "./node_modules/.bin/eslint ./src --ext .js,.jsx,.ts,.tsx",
@@ -62,20 +67,10 @@
     "ethers": "^5.4.3",
     "ganache-core": "^2.13.2",
     "jest": "^27.0.6",
-    "jest-environment-ceramic": "^0.13.0",
+    "jest-environment-ceramic": "^0.14.0",
     "jest-fetch-mock": "^3.0.3",
-    "lru_map": "^0.4.1",
+    "jest-resolver-enhanced": "^1.0.1",
     "prettier": "^2.3.2",
     "typescript": "^4.3.5"
-  },
-  "jest": {
-    "automock": false,
-    "setupFiles": [
-      "./jest.setup.ts"
-    ],
-    "testMatch": [
-      "**/?(*.)+(spec|test).[jt]s?(x)"
-    ]
-  },
-  "prettier": "eslint-config-3box/prettier.config"
+  }
 }

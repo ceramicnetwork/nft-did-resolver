@@ -2,14 +2,14 @@
  * @jest-environment ceramic
  */
 
-import NftResolver, { caipToDid, createNftDidUrl, didToCaip, NftResolverConfig } from '../index'
+import { getResolver, caipToDid, createNftDidUrl, didToCaip, NftResolverConfig } from '../index.js'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { EthereumAuthProvider } from '@ceramicnetwork/blockchain-utils-linking'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
 import * as u8a from 'uint8arrays'
 import fetchMock from 'jest-fetch-mock'
 import { ethers } from 'ethers'
-import { NftDidVectorBuilder, NftDidVector } from './nft-did-vector'
+import { NftDidVectorBuilder, NftDidVector } from './nft-did-vector.js'
 import ganache from 'ganache-core'
 import { AssetId } from 'caip'
 
@@ -73,7 +73,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
       },
     }
 
-    nftResolver = NftResolver.getResolver(config)
+    nftResolver = getResolver(config)
     resolver = new Resolver(nftResolver)
 
     // Set up the EthAuthProvider
@@ -106,7 +106,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         },
       }
 
-      expect(() => NftResolver.getResolver(customConfig)).not.toThrow()
+      expect(() => getResolver(customConfig)).not.toThrow()
     })
 
     it('throws when erc721 subGraphUrl is not a url', () => {
@@ -124,7 +124,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         },
       }
 
-      expect(() => NftResolver.getResolver(customConfig)).toThrowError(
+      expect(() => getResolver(customConfig)).toThrowError(
         `Invalid config for nft-did-resolver: Invalid URL`
       )
     })
@@ -143,7 +143,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
           },
         },
       }
-      expect(() => NftResolver.getResolver(customConfig)).toThrowError(
+      expect(() => getResolver(customConfig)).toThrowError(
         `Invalid config for nft-did-resolver: Invalid URL`
       )
     })
@@ -161,7 +161,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
           },
         },
       }
-      expect(() => NftResolver.getResolver(customConfig)).toThrowError(
+      expect(() => getResolver(customConfig)).toThrowError(
         'Invalid config for nft-did-resolver: Invalid chainId provided: eip155.1'
       )
     })
@@ -289,7 +289,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         },
       }
 
-      const customResolver = new Resolver(NftResolver.getResolver(customConfig))
+      const customResolver = new Resolver(getResolver(customConfig))
 
       const nftVector = nftVectorBuilder
         .setNftContract(erc721Contract)
@@ -319,7 +319,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         },
       }
 
-      const customResolver = new Resolver(NftResolver.getResolver(customConfig))
+      const customResolver = new Resolver(getResolver(customConfig))
 
       const nftVector = new NftDidVectorBuilder(cosmosCaip2Id, ErcNamespace.ERC721)
         .setNftContract(erc721Contract)
@@ -440,7 +440,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         },
       }
 
-      const customResolver = new Resolver(NftResolver.getResolver(customConfig))
+      const customResolver = new Resolver(getResolver(customConfig))
 
       const nftVector = nftVectorBuilder
         .setNftContract(erc1155Contract)
@@ -470,7 +470,7 @@ describe('NFT DID Resolver (TheGraph)', () => {
         },
       }
 
-      const customResolver = new Resolver(NftResolver.getResolver(customConfig))
+      const customResolver = new Resolver(getResolver(customConfig))
 
       const nftVector = new NftDidVectorBuilder(cosmosCaip2Id, ErcNamespace.ERC1155)
         .setNftContract(erc1155Contract)
