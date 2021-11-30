@@ -47,7 +47,7 @@
     "cross-fetch": "^3.1.4",
     "json-to-graphql-query": "^2.1.0",
     "merge-options": "^3.0.4",
-    "tslib": "^2.3.0",
+    "tslib": "^2.3.1",
     "uint8arrays": "^3.0.0"
   },
   "devDependencies": {
