@@ -63,7 +63,7 @@
     "did-resolver": "^3.0.1",
     "eslint": "^7.32.0",
     "eslint-config-3box": "^0.4.0",
-    "eslint-plugin-jest": "^24.4.0",
+    "eslint-plugin-jest": "^25.3.0",
     "ethers": "^5.4.3",
     "ganache-core": "^2.13.2",
     "jest": "^27.0.6",
