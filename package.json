@@ -48,7 +48,7 @@
     "json-to-graphql-query": "^2.1.0",
     "merge-options": "^3.0.4",
     "tslib": "^2.3.0",
-    "uint8arrays": "^2.1.8"
+    "uint8arrays": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.14.8",
