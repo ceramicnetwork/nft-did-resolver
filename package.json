@@ -70,7 +70,7 @@
     "jest-environment-ceramic": "^0.14.0",
     "jest-fetch-mock": "^3.0.3",
     "jest-resolver-enhanced": "^1.0.1",
-    "prettier": "^2.3.2",
+    "prettier": "^2.5.0",
     "typescript": "^4.5.2"
   }
 }
