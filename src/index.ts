@@ -11,7 +11,7 @@ import type { CeramicApi } from '@ceramicnetwork/common'
 import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
 import { ChainId, AccountId, AssetId } from 'caip'
 import { DIDDocumentMetadata } from 'did-resolver'
-import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraph-utils'
+import { blockAtTime, erc1155OwnersOf, erc721OwnerOf, isWithinLastBlock } from './subgraph-utils.js'
 import merge from 'merge-options'
 
 const DID_LD_JSON = 'application/did+ld+json'
