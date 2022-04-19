@@ -1,6 +1,6 @@
 {
   "name": "nft-did-resolver",
-  "version": "2.0.0-rc.0",
+  "version": "2.0.0",
   "description": "DID Resolver for the NFT method",
   "keywords": [
     "Ceramic",
