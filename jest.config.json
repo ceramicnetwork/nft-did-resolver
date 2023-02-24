@@ -1,7 +1,6 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
   "testEnvironment": "node",
-  "resolver": "jest-resolver-enhanced",
   "extensionsToTreatAsEsm": [".ts"],
   "testRegex": ".(spec|test).ts$",
   "globals": {

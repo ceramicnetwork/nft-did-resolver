@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`didToCaip convert did:nft id to caip AssetId 1`] = `
-AssetId {
-  "assetName": AssetName {
+{
+  "assetName": {
     "namespace": "erc721",
     "reference": "0x1234567891234567891234567891234596351156",
   },
-  "chainId": ChainId {
+  "chainId": {
     "namespace": "eip155",
     "reference": "1",
   },
