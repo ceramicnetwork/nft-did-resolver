@@ -153,13 +153,13 @@ For more information on writing schemas for GraphProtocol, check out [their docu
 
 The token DIDs are prefixed with `did:nft:`, and the latter half is a modified CAIP format.
 
-**ERC721** ([CAIP-22](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-22.md))
+**ERC721** ([CAIP-22](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-22.md))
 
 DID: `did:nft:{chainNamespace}:{chainReference}_erc721:{contractAddress}_{tokenId}`
 
 CAIP-22: `{chainNamespace}:{chainReference}/erc721:{contractAddress}/{tokenId}`
 
-**ERC1155** ([CAIP-29](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/CAIP-29.md))
+**ERC1155** ([CAIP-29](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-29.md))
 
 DID: `did:nft:{chainNamespace}:{chainReference}_erc1155:{contractAddress}_{tokenId}`
 
